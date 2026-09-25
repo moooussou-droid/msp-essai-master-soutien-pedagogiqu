@@ -1,0 +1,15 @@
+# En-têtes HTTP — Netlify (copié dans dist/ au build, honoré aussi en « Drop »)
+# Le service worker ne doit JAMAIS être mis en cache par le CDN :
+# sans cela, les utilisateurs installés gardent l'ancienne version
+# et l'application « ne marche pas toujours » après une mise à jour.
+/sw.js
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/manifest.json
+  Cache-Control: no-cache
+
+/index.html
+  Cache-Control: no-cache
+
+/404.html
+  Cache-Control: no-cache
