@@ -1,0 +1,21 @@
+MASTER SOUTIEN PÉDAGOGIQUE — DOSSIER PRÊT À PUBLIER
+
+Ce dossier est l'application déjà construite.
+Son fichier index.html doit rester à la racine du site publié.
+
+PUBLIER GRATUITEMENT
+
+Netlify :
+1. Ouvrez https://app.netlify.com/drop
+2. Glissez ce dossier deploy/ entier, ou tout son contenu, dans la zone de dépôt.
+
+Vercel :
+1. Ouvrez https://vercel.com/drag-drop (ou Vercel → New → Deploy)
+2. Glissez ce dossier deploy/ entier.
+
+À NE PAS DÉPOSER :
+- le dossier source du projet (src/, package.json, index.html avec /src/main.tsx) ;
+- un fichier .zip non décompressé lorsque l'outil demande un dossier.
+
+APRÈS PUBLICATION, depuis le dossier source :
+npm run deploy:verify https://votre-lien
