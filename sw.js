@@ -4,7 +4,7 @@
 //   → À chaque redéploiement, les utilisateurs reçoivent la NOUVELLE version
 //     (et non plus l'ancienne indéfiniment, comme avec un cache-first).
 // - Ressources statiques (icônes, manifest) : cache d'abord, réseau en secours.
-const CACHE_NAME = 'master-soutien-v69-refonte';
+const CACHE_NAME = 'master-soutien-v72-refonte';
 
 const ASSETS = [
   './',
@@ -13,6 +13,11 @@ const ASSETS = [
   './icon-192.png',
   './icon-512.png',
   './cover.png',
+  // v70-v71 : OCR français et lecteur PDF locaux, réutilisés pour les fiches de préparation.
+  './pdf.worker.min.mjs',
+  './ocr/worker.min.js',
+  './ocr/tesseract-core-lstm.wasm.js',
+  './ocr/fra.traineddata.gz',
 ];
 
 // Install event - cache core assets
