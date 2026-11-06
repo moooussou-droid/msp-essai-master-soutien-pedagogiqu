@@ -1,0 +1,247 @@
+SCÉNARIO E2E DE L'ASSISTANT IA — conservé pour la reprise du développement.
+Renommer en tests/e2e-v37.mjs quand la fonctionnalité repassera en ligne.
+
+import { chromium } from 'playwright';
+
+const BASE = 'http://localhost:5173';
+let pass = 0, fail = 0;
+const ok = (n) => { pass++; console.log(`  ✅ ${n}`); };
+const ko = (n, e) => { fail++; console.log(`  ❌ ${n}${e ? ' — ' + e : ''}`); };
+async function t(n, fn) { try { await fn(); ok(n); } catch (e) { ko(n, e.message.split('\n')[0]); } }
+
+const seed = () => {
+  localStorage.setItem('msp_activation', JSON.stringify({
+    activated: true, name: 'KOFFI Jean', code: '111111',
+    activatedAt: Date.now(), expiresAt: Date.now() + 31536000000, plan: 'complet',
+  }));
+  localStorage.setItem('msp_profile', JSON.stringify({ teacherName: 'KOFFI Jean', schoolName: 'EPP Test' }));
+  localStorage.setItem('msp_install_dismissed', 'true');
+  const g = localStorage.getItem.bind(localStorage);
+  localStorage.getItem = (k) => (typeof k === 'string' && k.indexOf('msp_guide_hidden_') === 0 ? 'true' : g(k));
+};
+
+/** Répond à la question courante en cliquant une puce ou en tapant du texte. */
+async function answer(page, value, { type = false } = {}) {
+  if (type) {
+    await page.fill('input[placeholder="Écrivez votre réponse..."]', value);
+    await page.click('button[aria-label="Envoyer"]');
+  } else {
+    await page.click(`button:has-text("${value}")`);
+  }
+  await page.waitForTimeout(900);
+}
+
+const browser = await chromium.launch();
+const ctx = await browser.newContext();
+await ctx.addInitScript(seed);
+const page = await ctx.newPage();
+
+console.log('\n=== E2E v37 — Assistant IA conversationnel ===\n');
+
+// Bloc 1 — accès et première question
+console.log('BLOC 1 — Accès à l’assistant');
+await page.goto(`${BASE}/#/assistant-ia`);
+await page.waitForTimeout(1500);
+
+await t('L’écran de l’assistant s’ouvre', async () => {
+  await page.waitForSelector('h1:has-text("Assistant pédagogique IA")', { timeout: 8000 });
+});
+await t('L’assistant pose lui-même la première question', async () => {
+  await page.waitForSelector('text=que souhaitez-vous préparer', { timeout: 8000 });
+});
+await t('Des réponses rapides sont proposées', async () => {
+  await page.waitForSelector('button:has-text("Une fiche pédagogique")', { timeout: 5000 });
+});
+await t('Une barre de progression est affichée', async () => {
+  await page.waitForSelector('text=/question\\(s\\) sur/', { timeout: 5000 });
+});
+
+// Bloc 2 — enchaînement conversationnel
+console.log('\nBLOC 2 — L’IA enchaîne et réagit');
+await answer(page, 'Une fiche pédagogique');
+await t('L’assistant accuse réception du choix', async () => {
+  await page.waitForSelector('text=Entendu', { timeout: 5000 });
+});
+await t('La question suivante porte sur la classe', async () => {
+  await page.waitForSelector('text=Pour quelle classe', { timeout: 5000 });
+});
+
+await answer(page, 'CE1');
+await t('La matière est demandée en citant la classe', async () => {
+  await page.waitForSelector('text=/Quelle matière enseignez-vous en CE1/', { timeout: 5000 });
+});
+
+await answer(page, 'Mathématiques');
+await t('L’IA reconnaît une matière scientifique', async () => {
+  await page.waitForSelector('text=démarche d’investigation', { timeout: 5000 });
+});
+await t('Le thème est demandé en citant la matière', async () => {
+  await page.waitForSelector('text=/thème ou le titre exact de la leçon en Mathématiques/', { timeout: 5000 });
+});
+
+await answer(page, 'Addition avec retenue', { type: true });
+await t('L’IA reprend le thème saisi', async () => {
+  await page.waitForSelector('text=/« Addition avec retenue » : bon thème/', { timeout: 5000 });
+});
+await t('La durée est demandée en citant le thème', async () => {
+  await page.waitForSelector('text=/Combien de temps dure la séance/', { timeout: 5000 });
+});
+
+// Bloc 3 — questions contextuelles
+console.log('\nBLOC 3 — Questions adaptées au contexte');
+await answer(page, '45 min');
+await answer(page, '50 à 70');
+await t('Effectif chargé → conseil sur le travail de groupe', async () => {
+  await page.waitForSelector('text=Effectif chargé', { timeout: 5000 });
+});
+await answer(page, 'Tableau et craie uniquement');
+await t('Matériel limité → l’IA s’y adapte', async () => {
+  await page.waitForSelector('text=aucun matériel coûteux', { timeout: 5000 });
+});
+await answer(page, 'Ils découvrent totalement la notion');
+await answer(page, 'Ils appliquent la technique sans comprendre');
+await t('L’IA promet une remédiation ciblée', async () => {
+  await page.waitForSelector('text=la remédiation ciblera exactement', { timeout: 5000 });
+});
+await answer(page, 'Le marché du quartier');
+await t('Ancrage local pris en compte', async () => {
+  await page.waitForSelector('text=/la situation de départ partira de/', { timeout: 5000 });
+});
+await t('Question scientifique conditionnelle posée (manipulation)', async () => {
+  await page.waitForSelector('text=/manipulation ou une expérience/', { timeout: 6000 });
+});
+await answer(page, 'Oui, avec du matériel simple');
+await answer(page, 'Évaluation formative rapide (ardoises)');
+await answer(page, 'Oui, des apprenants en grande difficulté');
+await answer(page, 'APC Bénin');
+await answer(page, 'Prévoir une trace écrite courte');
+
+// Bloc 4 — récapitulatif
+console.log('\nBLOC 4 — Récapitulatif avant rédaction');
+await t('L’entretien se termine par un récapitulatif', async () => {
+  await page.waitForSelector('text=Récapitulatif de votre demande', { timeout: 8000 });
+});
+await t('Le récapitulatif contient le thème', async () => {
+  await page.waitForSelector('text=Addition avec retenue', { timeout: 5000 });
+});
+await t('Chaque réponse peut être modifiée', async () => {
+  const n = await page.locator('button:has-text("modifier")').count();
+  if (n < 5) throw new Error(`seulement ${n} boutons modifier`);
+});
+await t('Le bouton de rédaction est proposé', async () => {
+  await page.waitForSelector('button:has-text("Rédiger mon document")', { timeout: 5000 });
+});
+
+// Bloc 5 — qualité du document produit
+console.log('\nBLOC 5 — Qualité de la fiche produite');
+await page.click('button:has-text("Rédiger mon document")');
+await page.waitForTimeout(1800);
+
+await t('Le document est généré', async () => {
+  await page.waitForSelector('text=/Fiche pédagogique : Addition avec retenue/', { timeout: 8000 });
+});
+const body = async () => (await page.locator('main').innerText());
+
+await t('La situation de départ est ancrée au marché', async () => {
+  const b = await body();
+  if (!b.includes('SITUATION DE DÉPART') || !b.includes('marché du quartier')) throw new Error('ancrage absent');
+});
+await t('Les prérequis déclarés sont exploités', async () => {
+  const b = await body();
+  if (!b.includes('RAPPEL DES PRÉREQUIS') || !b.includes('découvrent')) throw new Error('prérequis absents');
+});
+await t('L’organisation tient compte de l’effectif', async () => {
+  const b = await body();
+  if (!b.includes('ORGANISATION DE LA CLASSE') || !b.includes('groupes')) throw new Error('organisation absente');
+});
+await t('La remédiation cible l’obstacle déclaré', async () => {
+  const b = await body();
+  if (!b.includes('Obstacle ciblé') || !b.includes('sans compréhension')) throw new Error('remédiation générique');
+});
+await t('La différenciation prévoit le soutien demandé', async () => {
+  const b = await body();
+  if (!b.includes('DIFFÉRENCIATION') || !b.includes('Soutien')) throw new Error('différenciation absente');
+});
+await t('La manipulation scientifique est intégrée', async () => {
+  const b = await body();
+  if (!b.includes('MANIPULATION')) throw new Error('manipulation absente');
+});
+await t('La modalité d’évaluation choisie est reprise', async () => {
+  const b = await body();
+  if (!b.includes('ardoise')) throw new Error('modalité absente');
+});
+await t('L’exigence particulière est reportée', async () => {
+  const b = await body();
+  if (!b.includes('EXIGENCE PARTICULIÈRE') || !b.includes('trace écrite')) throw new Error('exigence absente');
+});
+await t('Le matériel réel est respecté', async () => {
+  const b = await body();
+  if (!b.includes('Tableau et craie')) throw new Error('matériel non repris');
+});
+await t('La fiche est nettement plus riche qu’un modèle brut', async () => {
+  const b = await body();
+  if (b.length < 2500) throw new Error(`document trop court (${b.length})`);
+});
+
+// Bloc 6 — actions finales
+console.log('\nBLOC 6 — Modification et enregistrement');
+await t('Le document est modifiable', async () => {
+  await page.click('button:has-text("Modifier")');
+  await page.waitForSelector('textarea', { timeout: 5000 });
+});
+await t('La modification est conservée', async () => {
+  const ta = page.locator('textarea').first();
+  await ta.fill('CE1 — groupe A');
+  await page.click('button:has-text("Aperçu")');
+  await page.waitForSelector('text=CE1 — groupe A', { timeout: 5000 });
+});
+await t('La fiche s’enregistre dans « Mes fiches »', async () => {
+  await page.click('button:has-text("Mes fiches")');
+  await page.waitForSelector('button:has-text("Enregistrée")', { timeout: 5000 });
+  const n = await page.evaluate(() => JSON.parse(localStorage.getItem('msp_fiches_pedagogiques') || '[]').length);
+  if (n < 1) throw new Error('aucune fiche enregistrée');
+});
+await t('Le téléchargement Word est proposé', async () => {
+  await page.waitForSelector('button:has-text("Télécharger en Word")', { timeout: 5000 });
+});
+
+// Bloc 7 — adaptation à un autre profil
+console.log('\nBLOC 7 — L’entretien s’adapte à un autre profil');
+const p2 = await ctx.newPage();
+await p2.goto(`${BASE}/#/assistant-ia`);
+await p2.waitForTimeout(1500);
+await answer(p2, 'Une fiche pédagogique');
+await answer(p2, 'Maternelle (GS)');
+await t('Maternelle → l’IA annonce une séance concrète et ludique', async () => {
+  await p2.waitForSelector('text=/jeu et la manipulation/', { timeout: 5000 });
+});
+await t('Maternelle → les matières proposées sont adaptées', async () => {
+  await p2.waitForSelector('button:has-text("Graphisme / Écriture")', { timeout: 5000 });
+});
+await answer(p2, 'Langage');
+await t('Matière de langue reconnue', async () => {
+  await p2.waitForSelector('text=/travail sur le sens, le vocabulaire/', { timeout: 5000 });
+});
+
+// Bloc 8 — accès depuis le générateur classique
+console.log('\nBLOC 8 — Accès depuis le générateur classique');
+const p3 = await ctx.newPage();
+await p3.goto(`${BASE}/#/generateur-fiches-ia`);
+await p3.waitForTimeout(1200);
+await t('Le mode conversation est mis en avant', async () => {
+  await p3.waitForSelector('text=Mode conversation (recommandé)', { timeout: 6000 });
+});
+await t('Il mène bien à l’assistant', async () => {
+  await p3.click('button:has-text("Mode conversation")');
+  await p3.waitForSelector('h1:has-text("Assistant pédagogique IA")', { timeout: 6000 });
+});
+await t('Le module Préparation de classe liste l’assistant', async () => {
+  const p4 = await ctx.newPage();
+  await p4.goto(`${BASE}/#/preparation-classe`);
+  await p4.waitForTimeout(1200);
+  await p4.waitForSelector('text=Assistant pédagogique IA (conversation)', { timeout: 6000 });
+});
+
+await browser.close();
+console.log(`\n=== RÉSULTAT v37 : ${pass} réussis / ${fail} échoués ===\n`);
+process.exit(fail === 0 ? 0 : 1);

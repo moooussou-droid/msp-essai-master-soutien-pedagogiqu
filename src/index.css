@@ -1,0 +1,551 @@
+@import "tailwindcss";
+
+/* Custom Benin-inspired color palette */
+:root {
+  --benin-green: #006b4f;
+  --benin-green-dark: #034333;
+  --benin-yellow: #d4a017;
+  --benin-red: #b63333;
+}
+
+/* Mobile-first optimizations */
+* {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+}
+
+html {
+  touch-action: manipulation;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overscroll-behavior-y: contain;
+}
+
+/* Ensure touch targets are at least 48px */
+button, a, input, select {
+  min-height: 48px;
+}
+
+/* Prevent zoom on input focus on iOS */
+input, select, textarea {
+  font-size: 16px;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Custom scrollbar for webkit */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a1a1a1;
+}
+
+/* PWA safe area support */
+@supports (padding: max(0px)) {
+  body {
+    padding-left: max(0px, env(safe-area-inset-left));
+    padding-right: max(0px, env(safe-area-inset-right));
+  }
+}
+
+/* Animation utilities */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { 
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.3s ease-out;
+}
+
+/* Focus visible for accessibility */
+:focus-visible {
+  outline: 2px solid var(--benin-green);
+  outline-offset: 2px;
+}
+
+/* Theme sombre global.
+   L'application utilise beaucoup de classes Tailwind utilitaires. Ces règles
+   gardent l'existant intact en mode clair et transforment les surfaces communes
+   lorsque <html class="dark"> est actif. */
+html.dark body {
+  background: #0f172a;
+  color: #e5e7eb;
+}
+
+html.dark .bg-gray-50,
+html.dark .bg-gray-100,
+html.dark .bg-zinc-100,
+html.dark .bg-slate-50 {
+  background-color: #0f172a !important;
+}
+
+html.dark .bg-white {
+  background-color: #1e293b !important;
+}
+
+html.dark .text-gray-800,
+html.dark .text-gray-900,
+html.dark .text-slate-900 {
+  color: #f8fafc !important;
+}
+
+html.dark .text-gray-700,
+html.dark .text-slate-700,
+html.dark .text-zinc-700 {
+  color: #e5e7eb !important;
+}
+
+html.dark .text-gray-600,
+html.dark .text-slate-600,
+html.dark .text-zinc-600 {
+  color: #cbd5e1 !important;
+}
+
+html.dark .text-gray-500,
+html.dark .text-gray-400,
+html.dark .text-slate-500,
+html.dark .text-zinc-500 {
+  color: #94a3b8 !important;
+}
+
+html.dark .border,
+html.dark .border-b,
+html.dark .border-t,
+html.dark .border-gray-100,
+html.dark .border-gray-200,
+html.dark .border-gray-300 {
+  border-color: #334155 !important;
+}
+
+html.dark input,
+html.dark select,
+html.dark textarea {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+  border-color: #334155 !important;
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+  color: #64748b !important;
+}
+
+html.dark table thead,
+html.dark .bg-gray-200 {
+  background-color: #334155 !important;
+}
+
+html.dark .shadow,
+html.dark .shadow-lg,
+html.dark .shadow-xl {
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35) !important;
+}
+
+html.dark .hover\:bg-gray-100:hover,
+html.dark .hover\:bg-gray-50:hover {
+  background-color: #334155 !important;
+}
+
+
+/* ==================================================================
+   MODE NUIT GLOBAL (v38)
+   L'application n'utilisait aucune classe `dark:`. Plutôt que de
+   reprendre des milliers de classes, le mode nuit redéfinit ici les
+   utilitaires Tailwind les plus utilisés lorsque <html> porte .dark.
+   Tous les écrans en bénéficient automatiquement.
+   ================================================================== */
+
+html.dark body { background-color: #0f172a; color: #e2e8f0; }
+
+/* Fonds clairs → fonds sombres */
+html.dark .bg-white { background-color: #1e293b !important; }
+html.dark .bg-gray-50 { background-color: #0f172a !important; }
+html.dark .bg-gray-100 { background-color: #1e293b !important; }
+html.dark .bg-gray-200 { background-color: #334155 !important; }
+html.dark .bg-slate-50 { background-color: #0f172a !important; }
+
+/* Textes sombres → textes clairs */
+html.dark .text-gray-900,
+html.dark .text-gray-800 { color: #f1f5f9 !important; }
+html.dark .text-gray-700 { color: #e2e8f0 !important; }
+html.dark .text-gray-600 { color: #cbd5e1 !important; }
+html.dark .text-gray-500 { color: #94a3b8 !important; }
+html.dark .text-gray-400 { color: #94a3b8 !important; }
+
+/* Bordures */
+html.dark .border-gray-100,
+html.dark .border-gray-200,
+html.dark .border-gray-300,
+html.dark .border { border-color: #334155 !important; }
+
+/* Champs de saisie */
+html.dark input,
+html.dark textarea,
+html.dark select {
+  background-color: #1e293b !important;
+  color: #f1f5f9 !important;
+  border-color: #475569 !important;
+}
+html.dark input::placeholder,
+html.dark textarea::placeholder { color: #64748b !important; }
+
+/* Pastilles de couleur atténuées pour ne pas éblouir */
+html.dark .bg-emerald-50 { background-color: #064e3b !important; }
+html.dark .bg-amber-50 { background-color: #451a03 !important; }
+html.dark .bg-blue-50 { background-color: #172554 !important; }
+html.dark .bg-red-50 { background-color: #450a0a !important; }
+html.dark .bg-purple-50 { background-color: #3b0764 !important; }
+html.dark .bg-indigo-50 { background-color: #1e1b4b !important; }
+html.dark .text-emerald-800, html.dark .text-emerald-900 { color: #6ee7b7 !important; }
+html.dark .text-amber-800, html.dark .text-amber-900 { color: #fcd34d !important; }
+html.dark .text-blue-800, html.dark .text-blue-900 { color: #93c5fd !important; }
+
+/* Ombres moins marquées sur fond sombre */
+html.dark .shadow, html.dark .shadow-sm, html.dark .shadow-lg {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.6) !important;
+}
+
+/* ------------------------------------------------------------------
+   FILTRE LUMIÈRE BLEUE — teinte chaude réglable (0 à 3)
+   ------------------------------------------------------------------ */
+html[data-msp-warmth="1"] body { filter: sepia(0.12) saturate(0.96); }
+html[data-msp-warmth="2"] body { filter: sepia(0.24) saturate(0.92) brightness(0.97); }
+html[data-msp-warmth="3"] body { filter: sepia(0.38) saturate(0.88) brightness(0.94); }
+
+/* ==================================================================
+   v47 — SYSTÈME DE DESIGN « INTERNATIONAL AUX TEINTES AFRICAINES »
+   ==================================================================
+   Objectif : une base moderne et sobre (lisible en plein soleil, gros
+   boutons, contrastes élevés) REHAUSSÉE de motifs et de couleurs
+   d'Afrique de l'Ouest, plutôt qu'un décor folklorique qui nuirait à
+   la lisibilité.
+
+   Références chromatiques :
+     - vert / jaune / rouge : drapeau du Bénin
+     - terre de Kanvo, ocre du Sahel, indigo des tissus teints
+     - motifs inspirés du kente et des tissages bogolan (en pointillés
+       et chevrons discrets, jamais derrière du texte long)
+   ------------------------------------------------------------------ */
+:root {
+  /* Couleurs de marque */
+  --msp-green: #006b4f;
+  --msp-green-deep: #034333;
+  --msp-gold: #d4a017;
+  --msp-terracotta: #b63333;
+  --msp-indigo: #163c46;
+  --msp-sand: #f8f6ef;
+  --msp-ink: #17231e;
+  --msp-surface: #ffffff;
+  --msp-border: #e4e8e1;
+  --msp-shadow: 0 12px 32px -18px rgba(3, 67, 51, .24);
+
+  /* Dégradé d'en-tête MSP, vert profond et or béninois */
+  --msp-header: linear-gradient(125deg, #034333 0%, #006b4f 62%, #0d7654 100%);
+}
+
+/* Bandeau de licence — nominatif, présent en haut de chaque page */
+.msp-licence-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 26px;
+  padding: 3px 12px;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: #fff8e7;
+  background: linear-gradient(90deg, var(--msp-green-deep), var(--msp-green) 45%, var(--msp-terracotta));
+  /* Liseré doré : rappel des galons de tissu tissé */
+  border-bottom: 2px solid var(--msp-gold);
+}
+
+/* Motif de tissage discret, réservé aux en-têtes et cartes décoratives.
+   Opacité très faible : le texte posé dessus reste parfaitement lisible. */
+/*
+ * TISSAGE KENTE (v47) — CORRIGE EN v51.
+ *
+ * BUG : cette regle definissait `background-image` avec le seul motif.
+ * Or les degrades Tailwind (`bg-gradient-to-r from-… to-…`) passent eux
+ * aussi par `background-image` : le motif les EFFACAIT. Les en-tetes de
+ * module se retrouvaient donc quasi blancs, avec du texte blanc dessus —
+ * donc illisibles.
+ *
+ * CORRECTIF : le motif est applique en `::before` superpose, ce qui laisse
+ * le degrade intact en arriere-plan. `position: relative` sur le parent et
+ * `z-index` sur le contenu garantissent que le voile reste DERRIERE le
+ * texte et n'intercepte aucun clic (`pointer-events: none`).
+ */
+.msp-kente {
+  position: relative;
+  isolation: isolate;
+}
+
+.msp-kente::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.07) 0 6px, transparent 6px 12px),
+    repeating-linear-gradient(-45deg, rgba(0, 0, 0, 0.05) 0 6px, transparent 6px 12px);
+}
+
+/* Le contenu de l'en-tete passe au-dessus du voile decoratif. */
+.msp-kente > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* En-tête de module : dégradé de marque + motif tissé */
+.msp-module-header {
+  background: var(--msp-header);
+  color: #fff;
+}
+
+/* Filet décoratif aux couleurs du drapeau, pour souligner un titre */
+.msp-flag-rule {
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(90deg,
+    var(--msp-green) 0 33%,
+    var(--msp-gold) 33% 66%,
+    var(--msp-terracotta) 66% 100%);
+}
+
+/* Carte de module : relief léger, coin doré */
+.msp-card {
+  background: #fff;
+  border: 1px solid #e8e2d4;
+  border-radius: 16px;
+  box-shadow: 0 1px 2px rgba(23, 32, 42, 0.05), 0 8px 20px -12px rgba(4, 106, 56, 0.25);
+}
+
+/* À l'impression, aucun décor : on économise l'encre des écoles. */
+/*
+ * IMPRESSION — revu en v53.
+ *
+ * ⚠️ BUG CORRIGE : la regle precedente masquait « .msp-kente » en entier.
+ * Or depuis la v51 cette classe porte l'EN-TETE des ecrans (titre du
+ * document, nom de la classe…). A l'impression, ces en-tetes
+ * disparaissaient donc completement : la feuille sortait sans titre.
+ * On ne masque desormais que le VOILE decoratif (le pseudo-element) et on
+ * force un rendu noir sur blanc, economique en encre et lisible.
+ */
+@media print {
+  /* Bandeau de licence : inutile sur papier. */
+  .msp-licence-bar { display: none !important; }
+
+  /* Le motif tisse et le filet decoratif ne s'impriment pas… */
+  .msp-kente::before { display: none !important; }
+  .msp-flag-rule { display: none !important; }
+
+  /* …mais l'en-tete lui-meme reste, en noir sur blanc. */
+  .msp-kente,
+  .msp-module-header {
+    background: #fff !important;
+    background-image: none !important;
+    color: #000 !important;
+    box-shadow: none !important;
+    border-bottom: 1px solid #000 !important;
+    position: static !important;
+  }
+  .msp-kente * { color: #000 !important; }
+
+  /* Les boutons d'action n'ont aucun sens sur une feuille imprimee. */
+  button, .print\:hidden { display: none !important; }
+
+  /* Les cartes s'impriment a plat, sans ombre ni fond colore. */
+  .msp-card {
+    box-shadow: none !important;
+    border: 1px solid #999 !important;
+    break-inside: avoid;
+  }
+
+  /* Un tableau ne doit pas etre coupe au milieu d'une ligne. */
+  table { break-inside: auto; }
+  tr { break-inside: avoid; break-after: auto; }
+  thead { display: table-header-group; }
+
+  body { background: #fff !important; }
+
+  /* v61 — Bulletins Maternelle & Primaire : tenir sur 2 pages A4 maximum.
+     On resserre les marges de page et l'échelle typographique du bulletin,
+     et on empêche les coupures internes malencontreuses. */
+  @page { size: A4; margin: 8mm; }
+  .msp-bulletin-compact { font-size: 92% !important; }
+  .msp-bulletin-compact table { font-size: 90% !important; }
+  .msp-bulletin-compact td,
+  .msp-bulletin-compact th { padding-top: 2px !important; padding-bottom: 2px !important; }
+  .msp-bulletin-compact { break-inside: auto; }
+
+  /* v67 — Bulletin officiel de maternelle : seules les deux pages du
+     livret sont imprimées, chacune sur sa propre feuille A4. */
+  body:has(.msp-preschool-doc) * { visibility: hidden !important; }
+  body:has(.msp-preschool-doc) .msp-preschool-doc,
+  body:has(.msp-preschool-doc) .msp-preschool-doc * { visibility: visible !important; }
+  body:has(.msp-preschool-doc) .msp-preschool-doc {
+    position: absolute !important;
+    inset: 0 auto auto 0 !important;
+    display: block !important;
+    width: 100% !important;
+    background: #fff !important;
+  }
+  .preschool-official-page {
+    width: 100% !important;
+    max-width: none !important;
+    min-height: 278mm;
+    box-shadow: none !important;
+    border: 0 !important;
+    break-after: page;
+    page-break-after: always;
+  }
+  .preschool-official-page:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+}
+
+/* Mode nuit : on garde les teintes, on baisse la luminance. */
+.dark .msp-card {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+
+/* =====================================================================
+   Refonte visuelle MSP — accueil, activation et accès d'équipe
+   Ajoutée par-dessus les styles v67 afin de conserver tous les écrans v67.
+   ===================================================================== */
+body {
+  color: var(--msp-ink);
+  background: #f5f6f2;
+}
+:focus-visible { outline: 3px solid rgba(212, 160, 23, .9); outline-offset: 3px; }
+::-webkit-scrollbar-track { background: #eef0ec; border-radius: 3px; }
+::-webkit-scrollbar-thumb { background: #aeb9af; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #718175; }
+
+header.bg-emerald-600 { background: var(--msp-header) !important; }
+header.bg-slate-900 { background: linear-gradient(115deg, #082f25, #123b32 72%, #1b4439) !important; }
+.bg-white.rounded-2xl.shadow, .bg-white.rounded-xl.shadow {
+  border: 1px solid var(--msp-border);
+  box-shadow: var(--msp-shadow);
+}
+input:not([type="checkbox"]):not([type="radio"]), select, textarea { border-color: #d6dfd6; }
+input:not([type="checkbox"]):not([type="radio"]):focus, select:focus, textarea:focus {
+  outline: 2px solid rgba(0, 107, 79, .22);
+  border-color: var(--msp-green);
+}
+
+.msp-home-main { width: min(100%, 1320px); margin-inline: auto; }
+.msp-home-header { background: var(--msp-header); border-bottom: 3px solid var(--msp-gold); }
+.msp-home-hero {
+  position: relative;
+  isolation: isolate;
+  background: linear-gradient(125deg, #064331 0%, #006b4f 70%, #135b43 100%);
+}
+.msp-home-hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  opacity: .22;
+  pointer-events: none;
+  background: radial-gradient(circle at 85% 15%, rgba(212,160,23,.55), transparent 30%), repeating-linear-gradient(135deg, transparent 0 18px, rgba(255,255,255,.06) 18px 19px);
+}
+.msp-home-activation {
+  background: linear-gradient(112deg, #034333 0%, #006b4f 68%, #12543f 100%);
+  border: 1px solid rgba(212,160,23,.62);
+  border-left: 5px solid var(--msp-gold);
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+.msp-home-activation:hover { transform: translateY(-2px); box-shadow: 0 18px 30px -18px rgba(3,67,51,.55); }
+
+.msp-activation-page {
+  color: #17231e;
+  background: radial-gradient(ellipse at 8% 0%, rgba(212,160,23,.12), transparent 30%), radial-gradient(ellipse at 95% 20%, rgba(0,107,79,.1), transparent 28%), #f4f5f0;
+}
+.msp-activation-header {
+  color: white;
+  background: linear-gradient(110deg, #033e2e, #006b4f 75%, #135642);
+  border-bottom: 2px solid rgba(212,160,23,.9);
+  box-shadow: 0 8px 22px -18px #013e2f;
+}
+.msp-activation-back { color: #fff; background: rgba(255,255,255,.13); border: 1px solid rgba(255,255,255,.16); }
+.msp-activation-hero {
+  background: linear-gradient(125deg, #043d2c 0%, #006b4f 65%, #0a5b42 100%);
+  box-shadow: 0 22px 44px -28px rgba(3,67,51,.6);
+  border: 1px solid rgba(212,160,23,.55);
+}
+.msp-activation-panel, .msp-activation-shell {
+  background: rgba(255,255,255,.97);
+  border: 1px solid #e2e8df;
+  box-shadow: 0 14px 38px -28px rgba(3,67,51,.45);
+}
+.msp-plan-card { min-height: 100%; box-shadow: 0 6px 18px -16px rgba(0,0,0,.28); transition: transform .18s ease, opacity .18s ease, box-shadow .18s ease; }
+.msp-plan-card:hover { transform: translateY(-2px); }
+.msp-activation-input { min-height: 52px; border: 1px solid #d5ded5; background: #fbfcf9; color: #17231e; outline: none; }
+.msp-activation-input:focus { border-color: var(--msp-green); box-shadow: 0 0 0 3px rgba(0,107,79,.13); }
+.msp-primary-button { background: linear-gradient(110deg, #034333, #007454); box-shadow: 0 10px 24px -16px rgba(3,67,51,.9); transition: transform .16s ease, filter .16s ease; }
+.msp-primary-button:hover { filter: brightness(1.08); transform: translateY(-1px); }
+.msp-activation-whatsapp { background: linear-gradient(105deg, #006b4f, #08865f); border: 1px solid rgba(212,160,23,.85); }
+.msp-activation-note { background: linear-gradient(125deg, #fff8df, #f3f7ed); border: 1px solid #e6d598; }
+.msp-activation-success { background: linear-gradient(135deg, #034333, #07805c); box-shadow: 0 12px 26px -16px rgba(3,67,51,.9); }
+.msp-eyebrow { color: #a37a09; font-size: 10px; font-weight: 900; letter-spacing: .16em; line-height: 1.4; }
+.msp-activation-header .msp-eyebrow, .msp-activation-hero .msp-eyebrow { color: #e7d89b; }
+
+.msp-admin-login {
+  background: radial-gradient(circle at 10% 10%, rgba(212,160,23,.2), transparent 32%), linear-gradient(145deg, #062c22, #034333 52%, #0d5640);
+}
+.msp-admin-login-card { background: rgba(255,255,255,.98); border: 1px solid rgba(212,160,23,.65); box-shadow: 0 28px 80px -35px rgba(0,0,0,.65); }
+.msp-admin-login-icon { background: linear-gradient(135deg, #034333, #07805c); border: 2px solid rgba(212,160,23,.85); }
+.msp-admin-support { background: linear-gradient(135deg, #fff, #f4f8f2); border: 1px solid #dce8db; box-shadow: var(--msp-shadow); }
+
+@media (max-width: 640px) {
+  .msp-activation-panel { border-radius: 1.4rem; }
+  .msp-home-activation { align-items: stretch; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+@media print {
+  .msp-home-activation { display: none !important; }
+  .bg-white.rounded-2xl.shadow, .bg-white.rounded-xl.shadow { border: 1px solid #999 !important; box-shadow: none !important; }
+}

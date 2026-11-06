@@ -1,0 +1,36 @@
+# Configuration Netlify — Master Soutien Pédagogique
+# (utilisée pour les déploiements depuis Git ; le fichier public/_headers
+#  + public/_redirects sont copiés dans dist/ et honorés aussi en « Drop »)
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+# Fallback SPA : toutes les routes renvoient vers index.html
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Le service worker ne doit jamais être mis en cache par le CDN
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
+[[headers]]
+  for = "/manifest.json"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/assets/ort-wasm-simd-threaded.asyncify.wasm.gz"
+  [headers.values]
+    Content-Type = "application/wasm"
+    Content-Encoding = "gzip"
+    Cache-Control = "public, max-age=31536000, immutable"

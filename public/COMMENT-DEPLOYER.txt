@@ -1,0 +1,28 @@
+MASTER SOUTIEN PÉDAGOGIQUE — DOSSIER PRÊT À PUBLIER
+
+Ce dossier contient une application déjà construite. Gardez index.html et le dossier assets/ à la racine du site publié.
+
+TÉLÉVERSEMENT WEB GITHUB (limite affichée : 25 Mo par fichier)
+- Le message « Drag files here to add them to your repository » vient de l’interface web GitHub, pas de Vercel.
+- Le gros runtime local est maintenant livré comme assets/ort-wasm-simd-threaded.asyncify.wasm.gz (moins de 25 Mo). Il est servi avec Content-Encoding: gzip; le navigateur le décompresse automatiquement, sans perte de fonctionnalités.
+- Extrayez l’archive de déploiement sur votre appareil, puis ajoutez son CONTENU à la racine du dépôt GitHub. N’ajoutez pas le ZIP comme un fichier du site et ne sélectionnez pas l’ancien .wasm non compressé.
+- Le commit GitHub déclenchera ensuite le déploiement Vercel associé.
+
+DÉPLOIEMENT DIRECT VERCEL DROP
+- Ouvrez https://vercel.com/drop et déposez l’archive ZIP de déploiement elle-même.
+- Vercel la décompresse; son contenu doit garder index.html, vercel.json et assets/ à la racine.
+
+IA LOCALE SUR L’APPAREIL
+- Après publication en HTTPS, choisissez Qwen3 local dans le panneau IA et téléchargez le modèle (moins de 1 Go selon le moteur choisi).
+- Une fois les ressources mises en cache, le modèle fonctionne sur l’appareil et peut rester disponible hors ligne.
+- Le modèle 0,6B est plus limité que les meilleurs modèles cloud; relisez ses réponses. Le moteur hors ligne à canevas reste aussi disponible.
+
+FICHES PUBLIÉES PAR L’ADMINISTRATION
+- Les appareils récupèrent automatiquement les fiches publiques et leurs nouveautés depuis le catalogue Supabase; les pages déjà téléchargées restent consultables hors ligne.
+- La publication par l’administration exige le projet source Vercel, les migrations Supabase et une session IA de rôle principal. Un site statique seul peut télécharger les fiches, mais ne peut pas les publier.
+- Le ZIP manuel reste un transfert de secours.
+
+LIMITATION DU DÉPLOIEMENT STATIQUE
+- Ce dossier ne contient pas les fonctions serveur /api/ai/* : les fournisseurs IA distants et la publication admin requièrent le projet source Vercel et ses secrets.
+
+Après publication, vérifiez le site avec : npm run deploy:verify https://votre-lien

@@ -20,15 +20,32 @@ Notes · bulletins · statistiques · suivi des présences · espace parents · 
 
 ### 👩‍🏫 Pour les enseignants
 - **Notes & moyennes** — saisie des notes, calcul automatique des moyennes pondérées.
-- **Bulletins** — génération de bulletins scolaires en PDF, avec **QR code de vérification**.
+- **Bulletins** — bulletins de notes du primaire/secondaire avec QR code, et **bulletin officiel de Maternelle en deux pages** : grille trimestrielle des 10 domaines en **TS/S/PS**, observations, appréciation générale et visas, sans moyenne ni classement.
 - **Statistiques de classe** — moyennes par matière, rangs, graphiques.
 - **Présences & emploi du temps** — registre de présence et gestion des horaires.
 - **Correspondance** — avis et messages aux parents.
 
 ### 🏫 Pour l'administration scolaire
+- **Espace École (v64)** — chaque établissement dispose de son propre espace avec **toutes ses classes** : génération en un clic (groupes A/B, séries du lycée), titulaires, effectifs F/G et progression consolidés par cycle.
+  Abonnements annuels d'établissement : **6000 FCFA/an** (Maternelle → CM2, codes « 6… ») et **10000 FCFA/an** (Maternelle → Terminale, codes « 7… »), toutes les fonctions Pro incluses.
 - **Tableau de bord administrateur** — supervision multi-classes et multi-utilisateurs.
 - **Gestion des cours** et modération de la plateforme MOOC.
 - **Transfert d'établissement** et outils de gestion avancés.
+
+### 🗣️ Langues au primaire (v64)
+- **Grammaire, Conjugaison et Orthographe francophones** — 32 leçons (CE → 6ᵉ) : règles, astuces anti-dictée, tableaux de conjugaison, exemples béninois, exercices corrigés et quiz de 24 questions.
+- **Les notions basiques d'anglais pour le Primaire** — 12 unités bilingues (CI → CM2), 144 mots avec prononciation audio et guidée, dialogues, activités de classe et quiz.
+
+### 🍲 Cantine scolaire (arrondi v65, payeurs-mangeurs v66)
+- **Simulateur de prélèvement, cahier des menus et cahier de stock** partagent la nouvelle **méthode d’arrondi de sortie des denrées par intervalles** : partie décimale au quart pour l’huile, les céréales et les légumineuses (seuils 0,375 / 0,625 / 0,875), au dixième pour le sel (seuils 0,15 / 0,25 / … / 0,95).
+- **Relevé des effectifs payeurs-mangeurs** : en système **payeur-mangeur**, seuls les présents ayant payé les frais de cantine sont comptés comme mangeurs ; en **apport communautaire**, tous les présents le sont. Le relevé journalier alimente le simulateur et le cahier des menus.
+- Les graphiques de la méthode sont affichés dans les écrans de cantine ; les brouillons de semaines et les cahiers de menus sont recalculés à l’ouverture, tandis que les semaines clôturées restent historiques.
+- Le **guide de l’utilisateur intégré** documente les nouveautés v64 (Espace École, Français GCO, Anglais au Primaire), v65 (arrondi de cantine), v66 (payeurs-mangeurs) et v67 (Maternelle TS/S/PS, photos EducMaster), avec aides contextuelles sur les écrans concernés.
+
+### 🍼 Maternelle et photos EducMaster (v67)
+- **GRILLE D’ÉVALUATION TRIMESTRIELLE** fidèle au livret officiel : Fréquentations, Propreté corporelle et vestimentaire, Socialisation, Langage, Pré-écriture, Éducation du mouvement, Pré-lecture, Pré-mathématique, Poésie et Chant, Autres. Chaque domaine reçoit **TS**, **S** ou **PS** et une observation ; la page 2 contient l’appréciation générale, les visas enseignant/Directeur/parents et les légendes.
+- **Studio Photos d’identité EducMaster** pour chaque école et chaque classe : caméra intégrée ou import, cadrage portrait **800 × 1000 px**, fond blanc connecté aux bords sans blanchir le sujet central, contrôles matricule/photo/doublons, import groupé par matricule et ZIP nommé **`matricule_NOM_Prenom_Prenom`** (ex. `104120183578_ASSOGBA_Jean_Paul.jpg`).
+- Le ZIP contient aussi un bordereau CSV et les consignes à suivre dans EducMaster (*Actions → Importer les photos → Enregistrer*).
 
 ### 👪 Pour les parents
 - **Espace parents** sécurisé par code et **consentement RGPD**.
@@ -78,15 +95,11 @@ publier : `index.html`, `assets/`, et les fichiers PWA (`manifest.json`, `sw.js`
 
 L'application est configurée pour **Vercel** (voir [`DEPLOIEMENT-VERCEL.md`](./DEPLOIEMENT-VERCEL.md)).
 
-**Le plus simple** — via Git :
+**Site statique hors ligne** — le dossier `deploy/` peut être publié sur Netlify ou Vercel Drop.
 
-1. Poussez ce dépôt sur GitHub.
-2. Importez-le sur [vercel.com/new](https://vercel.com/new).
-3. Cliquez **Deploy** — le fichier `vercel.json` configure tout automatiquement
-   (build, dossier de sortie, *rewrites* SPA, en-têtes PWA).
+**IA centralisée en ligne** — importez le **projet source complet** sur Vercel pour déployer les fonctions serveur `/api/ai/*`. Configurez Supabase, les secrets fournisseur et les codes IA dédiés en suivant [`AI_GATEWAY_SETUP.md`](./AI_GATEWAY_SETUP.md). Le glisser-déposer de `deploy/` n’active pas ces fonctions.
 
-L'app est aussi déployable sur **Netlify** (`netlify.toml` fourni) ou par simple
-**glisser-déposer** du dossier `deploy/`.
+Voir aussi [`DEPLOIEMENT-VERCEL.md`](./DEPLOIEMENT-VERCEL.md) pour les étapes de publication.
 
 ---
 

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Background - Green (Benin flag) -->
+  <rect width="512" height="512" rx="100" fill="#059669"/>
+  
+  <!-- Book/Note icon -->
+  <rect x="120" y="140" width="272" height="280" rx="20" fill="white" opacity="0.95"/>
+  <rect x="140" y="160" width="232" height="40" rx="8" fill="#059669"/>
+  
+  <!-- Lines representing notes -->
+  <rect x="160" y="230" width="192" height="16" rx="4" fill="#059669"/>
+  <rect x="160" y="270" width="192" height="16" rx="4" fill="#059669"/>
+  <rect x="160" y="310" width="192" height="16" rx="4" fill="#059669"/>
+  <rect x="160" y="350" width="140" height="16" rx="4" fill="#f59e0b"/>
+  
+  <!-- Graduation cap accent -->
+  <path d="M256 80 L320 110 L256 140 L192 110 Z" fill="#f59e0b"/>
+  <rect x="246" y="140" width="20" height="30" fill="#f59e0b"/>
+</svg>

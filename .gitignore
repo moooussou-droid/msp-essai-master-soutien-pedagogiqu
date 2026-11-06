@@ -1,0 +1,31 @@
+# Dépendances
+node_modules/
+
+# Sorties de build (régénérées par Vercel / npm run build:lowmem)
+dist/
+deploy/
+
+# Logs & divers
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+
+# Caches d'outils
+.vite/
+.cache/
+.turbo/
+coverage/
+
+# Fichiers d'environnement locaux
+.env
+.env.*
+!.env.example
+
+# Éditeurs
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# Vercel
+.vercel/
