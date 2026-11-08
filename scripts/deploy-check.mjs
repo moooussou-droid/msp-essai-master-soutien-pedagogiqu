@@ -138,14 +138,14 @@ const forbiddenBrowserStrings = [
   'api.openai.com', 'api.anthropic.com', 'api.mistral.ai', 'api.perplexity.ai',
   'api.deepseek.com', 'generativelanguage.googleapis.com', 'OPENAI_API_KEY',
   'ANTHROPIC_API_KEY', 'MISTRAL_API_KEY', 'PERPLEXITY_API_KEY', 'GEMINI_API_KEY', 'DEEPSEEK_API_KEY',
-  'SUPABASE_SERVICE_ROLE_KEY',
+  'SUPABASE_SECRET_KEY', 'SUPABASE_SERVICE_ROLE_KEY',
 ];
 for (const [label, dir] of [['dist', DIST], ['deploy', DEPLOY]]) {
   const assetsDir = join(dir, 'assets');
   const jsFiles = existsSync(assetsDir) ? readdirSync(assetsDir).filter((file) => file.endsWith('.js')) : [];
   const bundle = jsFiles.map((file) => readFileSync(join(assetsDir, file), 'utf8')).join('\\n');
   const browserSecretsSafe = jsFiles.length > 0 && !forbiddenBrowserStrings.some((marker) => bundle.includes(marker));
-  console.log(`  ${ok(browserSecretsSafe)} ${label} navigateur sans endpoint direct ni variable de clé fournisseur`);
+  console.log(`  ${ok(browserSecretsSafe)} ${label} navigateur sans endpoint direct ni secret serveur`);
   if (!browserSecretsSafe) allOk = false;
 }
 

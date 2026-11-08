@@ -73,12 +73,13 @@ test('la route de publication refuse les requêtes cross-origin et les sessions 
 });
 
 test('seul le rôle principal peut obtenir des dépôts signés et publier le manifeste', async () => {
-  const envNames = ['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'MSP_AI_SESSION_SECRET', 'NODE_ENV'];
+  const envNames = ['SUPABASE_URL', 'SUPABASE_SECRET_KEY', 'SUPABASE_SERVICE_ROLE_KEY', 'MSP_AI_SESSION_SECRET', 'NODE_ENV'];
   const restoreEnv = saveEnv(envNames);
   const originalFetch = globalThis.fetch;
   try {
     process.env.SUPABASE_URL = 'https://supabase.test';
-    process.env.SUPABASE_SERVICE_ROLE_KEY = 'service-role-secret-test';
+    process.env.SUPABASE_SECRET_KEY = 'sb_secret_test_key';
+    delete process.env.SUPABASE_SERVICE_ROLE_KEY;
     process.env.MSP_AI_SESSION_SECRET = 'prep-fiche-session-secret-at-least-32-bytes';
     process.env.NODE_ENV = 'test';
 
@@ -132,9 +133,10 @@ test('seul le rôle principal peut obtenir des dépôts signés et publier le ma
     assert.equal(signed.statusCode, 200);
     assert.match(signed.json().uploadUrl, /^https:\/\/supabase\.test\/storage\/v1\/object\/upload\/sign\//);
     assert.equal(signed.json().token, 'temporary-signed-upload-token');
-    assert.equal(signed.body.includes('service-role-secret-test'), false);
+    assert.equal(signed.body.includes('sb_secret_test_key'), false);
     assert.equal(storageCalls.length, 1);
-    assert.equal(storageCalls[0].init.headers.Authorization, 'Bearer service-role-secret-test');
+    assert.equal(storageCalls[0].init.headers.apikey, 'sb_secret_test_key');
+    assert.equal(storageCalls[0].init.headers.Authorization, undefined, 'une clé sb_secret_ opaque ne doit pas être envoyée en Bearer');
 
     const snapshotId = 'snapshot_87654321';
     const manifest = {
@@ -157,6 +159,8 @@ test('seul le rôle principal peut obtenir des dépôts signés et publier le ma
     assert.equal(published.json().published, true);
     assert.equal(published.json().version, snapshotId);
     assert.equal(catalogCalls.length, 2, 'lit l’ancien manifeste puis met à jour le catalogue');
+    assert.equal(catalogCalls[1].init.headers.apikey, 'sb_secret_test_key');
+    assert.equal(catalogCalls[1].init.headers.Authorization, undefined, 'les appels REST omettent Bearer avec une clé sb_secret_');
     assert.equal(JSON.parse(catalogCalls[1].init.body)[0].catalog_id, 'current');
 
     const invalid = responseMock();

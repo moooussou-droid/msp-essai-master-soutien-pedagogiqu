@@ -29,7 +29,7 @@ L’intégration et le build vérifient l’assemblage, mais aucune performance 
 1. Ouvrez le projet Supabase utilisé par MSP, puis **SQL Editor**.
 2. Exécutez `supabase/migrations/20261104_ai_gateway.sql` pour la passerelle IA.
 3. Exécutez aussi `supabase/migrations/20261106_prep_fiches_catalog.sql` pour le manifeste public et le bucket des fiches; la migration n’autorise aucune écriture publique.
-4. Dans **Project Settings → API**, copiez le Project URL et la clé **service_role**. La clé service-role contourne RLS : elle ne doit aller que dans les secrets Vercel et dans le terminal sécurisé de l’administrateur, jamais dans `VITE_*`, le code source ou un message.
+4. Dans le tableau de bord du projet, ouvrez **Settings → API Keys**. Copiez le **Project URL** et la **Secret key** (`sb_secret_...`), en créant une clé secrète si besoin. Dans Vercel et dans le terminal sécurisé de l’administrateur, nommez-la `SUPABASE_SECRET_KEY`. Cette clé serveur a des droits élevés : ne la mettez jamais dans `VITE_*`, le navigateur, le dépôt Git ou un message. Si vous utilisez encore la clé JWT `service_role`, elle se trouve dans la section **Legacy API Keys** et reste acceptée sous `SUPABASE_SERVICE_ROLE_KEY`. Le code n’envoie pas les nouvelles clés opaques `sb_secret_...` comme Bearer, car elles ne sont pas des JWT.
 
 ## Déploiement obligatoire avec fonctions serveur
 
@@ -44,7 +44,7 @@ Le glisser-déposer d’un dossier statique `deploy/` ou Netlify Drop ne fournit
 
 Les valeurs doivent être définies **côté serveur**, sans préfixe `VITE_` ou `NEXT_PUBLIC_` :
 
-- Supabase : `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `MSP_AI_SESSION_SECRET`.
+- Supabase : `SUPABASE_URL`, `SUPABASE_SECRET_KEY` (recommandée, `sb_secret_...`) ou l’ancienne `SUPABASE_SERVICE_ROLE_KEY`, et `MSP_AI_SESSION_SECRET`.
 - Fournisseurs : `OPENAI_API_KEY` + `OPENAI_MODEL` (ou `OPENAI_MODELS`), idem avec `ANTHROPIC`, `MISTRAL`, `PERPLEXITY`, `GEMINI`, `DEEPSEEK`.
 - Les identifiants modèle dans `*_MODELS` sont séparés par des virgules; seuls ces modèles seront proposés/acceptés. Si plusieurs modèles sont définis, l’utilisateur peut choisir dans l’interface.
 - Limites : `MSP_AI_PER_MINUTE_LIMIT`, `MSP_AI_GLOBAL_DAILY_LIMIT`, `MSP_AI_MAX_OUTPUT_TOKENS`.
@@ -52,7 +52,7 @@ Les valeurs doivent être définies **côté serveur**, sans préfixe `VITE_` ou
 
 ## Créer et révoquer les codes IA
 
-Le propriétaire exécute le script depuis un terminal de confiance, avec `SUPABASE_URL` et `SUPABASE_SERVICE_ROLE_KEY` définis dans l’environnement :
+Le propriétaire exécute le script depuis un terminal de confiance, avec `SUPABASE_URL` et `SUPABASE_SECRET_KEY` (ou, pour compatibilité, `SUPABASE_SERVICE_ROLE_KEY`) définis dans l’environnement :
 
 ```sh
 npm run ai:access -- issue "Nom du principal" principal 365 30
@@ -68,7 +68,7 @@ npm run ai:access -- revoke CODE_IA_COMPLET
 - La publication cloud doit être faite depuis le déploiement Vercel qui héberge `/api/ai/prep-fiches`. Un ZIP statique peut lire le catalogue Supabase public et synchroniser les appareils, mais ne peut pas publier.
 - Dans l’écran d’administration des fiches, ouvrez une session avec un code IA `principal`, puis publiez/synchronisez. L’API revérifie le rôle sur le serveur; le rôle administrateur local du navigateur ne suffit pas.
 - La fonction envoie uniquement les fiches dont `published` vaut `true`. Les brouillons, les listes d’élèves, notes et autres ressources sont exclus.
-- Le manifeste se trouve dans `msp_prep_fiches_catalog` (lecture publique seule); les pages se trouvent dans le bucket public `msp-prep-fiches`. Les navigateurs n’obtiennent jamais la clé service-role : l’API émet des URL de dépôt temporaires, puis met à jour le manifeste.
+- Le manifeste se trouve dans `msp_prep_fiches_catalog` (lecture publique seule); les pages se trouvent dans le bucket public `msp-prep-fiches`. Les navigateurs n’obtiennent jamais la clé serveur Supabase : l’API émet des URL de dépôt temporaires, puis met à jour le manifeste.
 - Les utilisateurs vérifient les mises à jour à l’ouverture, au retour en ligne et toutes les dix minutes pendant que le module est ouvert. Les pages sont gardées dans IndexedDB pour une consultation hors connexion; le ZIP reste un transfert de secours.
 - Limites de sécurité : 45 MB par page et 200 MB par publication. Les pages de plus de 6 MiB utilisent le protocole reprenable TUS; en cas d’échec, le manifeste précédent reste publié.
 
@@ -81,4 +81,4 @@ npm run ai:access -- revoke CODE_IA_COMPLET
 - Vérifier les confirmations d’envoi séparées du clic « Générer » et ne pas tester avec des données d’élèves.
 - La prévisualisation statique locale ne simule pas Vercel Functions : les API en ligne seront disponibles après le déploiement Vercel du dépôt source.
 
-**Aucun fournisseur n’est activé dans ce dépôt : aucune clé API, clé service-role, code IA ni déploiement externe n’a été fourni ou configuré.**
+**Aucun fournisseur n’est activé dans ce dépôt : aucune clé API, clé serveur Supabase, code IA ni déploiement externe n’a été fourni ou configuré.**

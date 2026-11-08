@@ -1,0 +1,12 @@
+PATCH MSP — prise en charge de la clé Supabase sb_secret_
+
+But : rendre le code serveur et le script de gestion compatibles avec la clé Supabase moderne sb_secret_... via SUPABASE_SECRET_KEY. Pour cette clé opaque, les requêtes envoient apikey sans Authorization: Bearer. L’ancienne clé JWT service_role reste prise en charge via SUPABASE_SERVICE_ROLE_KEY.
+
+Installation :
+1. Décompresser cette archive à la racine du clone local du dépôt MSP-67 correspondant, en conservant les sous-dossiers et en remplaçant les fichiers portant le même nom.
+2. Dans GitHub Desktop, contrôler les fichiers modifiés. Ne jamais ajouter un fichier .env avec de vraies clés.
+3. Saisir un résumé, par exemple « Support SUPABASE_SECRET_KEY sb_secret », cliquer Commit to main, puis Push origin.
+4. Attendre que le déploiement Vercel lié à GitHub soit Ready.
+5. Dans Vercel, créer SUPABASE_SECRET_KEY avec la valeur sb_secret_... et conserver SUPABASE_URL ainsi que MSP_AI_SESSION_SECRET. Redéployer si besoin.
+
+Aucun secret réel n’est inclus dans cette archive. Vérification effectuée ici : node --test tests/aiGateway.test.mjs (7 tests réussis). Le test d’intégration de publication exige les dépendances de développement du projet.

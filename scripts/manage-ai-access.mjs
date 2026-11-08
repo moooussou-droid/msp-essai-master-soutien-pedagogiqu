@@ -3,23 +3,23 @@ import { createHash, randomBytes } from 'node:crypto';
 
 const [command, ...args] = process.argv.slice(2);
 const supabaseUrl = String(process.env.SUPABASE_URL || '').replace(/\/+$/, '');
-const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+const supabaseKey = process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
 function usage() {
   console.log(`
-Gestion locale des codes IA MSP (la clé service-role ne quitte jamais votre terminal).
+Gestion locale des codes IA MSP (la clé serveur Supabase ne quitte jamais votre terminal).
 
   npm run ai:access -- issue "Nom ou équipe" principal|team [jours=365] [requêtes/jour=25]
   npm run ai:access -- revoke CODE_IA
   npm run ai:access -- list
 
-Variables requises : SUPABASE_URL et SUPABASE_SERVICE_ROLE_KEY.
+Variables requises : SUPABASE_URL et SUPABASE_SECRET_KEY (ou l’ancienne SUPABASE_SERVICE_ROLE_KEY).
 Le code complet n'est affiché qu'une seule fois; le serveur ne conserve que son SHA-256.
 `);
 }
 
-if (!supabaseUrl || !serviceKey) {
-  console.error('Configuration manquante : définissez SUPABASE_URL et SUPABASE_SERVICE_ROLE_KEY dans votre terminal.');
+if (!supabaseUrl || !supabaseKey) {
+  console.error('Configuration manquante : définissez SUPABASE_URL et SUPABASE_SECRET_KEY (ou SUPABASE_SERVICE_ROLE_KEY) dans votre terminal.');
   process.exit(2);
 }
 
@@ -27,8 +27,8 @@ async function db(path, init = {}) {
   const response = await fetch(`${supabaseUrl}/rest/v1/${path}`, {
     ...init,
     headers: {
-      apikey: serviceKey,
-      Authorization: `Bearer ${serviceKey}`,
+      apikey: supabaseKey,
+      ...(supabaseKey.startsWith('sb_secret_') ? {} : { Authorization: `Bearer ${supabaseKey}` }),
       'Content-Type': 'application/json',
       ...(init.headers || {}),
     },

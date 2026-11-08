@@ -115,9 +115,17 @@ function requireSameOrigin(req) {
 
 function getSupabaseConfig() {
   const url = String(process.env.SUPABASE_URL || '').replace(/\/+$/, '');
-  const key = String(process.env.SUPABASE_SERVICE_ROLE_KEY || '');
+  const key = String(process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || '');
   if (!url || !key) throw httpError(503, 'AI_SERVER_NOT_CONFIGURED', 'Le serveur IA n’est pas encore configuré.');
   return { url, key };
+}
+
+function supabaseKeyHeaders(key) {
+  // Les nouvelles clés opaques sb_secret_ ne sont pas des JWT : apikey seulement.
+  // Les clés legacy service_role sont des JWT et restent compatibles avec Bearer.
+  return key.startsWith('sb_secret_')
+    ? { apikey: key }
+    : { apikey: key, Authorization: `Bearer ${key}` };
 }
 
 async function supabaseRequest(path, init = {}) {
@@ -127,8 +135,7 @@ async function supabaseRequest(path, init = {}) {
     response = await fetch(`${url}/rest/v1/${path}`, {
       ...init,
       headers: {
-        apikey: key,
-        Authorization: `Bearer ${key}`,
+        ...supabaseKeyHeaders(key),
         'Content-Type': 'application/json',
         ...(init.headers || {}),
       },
@@ -635,8 +642,7 @@ async function prepFicheStorageRequest(path, init = {}) {
     response = await fetch(`${url}/storage/v1/${path}`, {
       ...init,
       headers: {
-        apikey: key,
-        Authorization: `Bearer ${key}`,
+        ...supabaseKeyHeaders(key),
         'Content-Type': 'application/json',
         ...(init.headers || {}),
       },

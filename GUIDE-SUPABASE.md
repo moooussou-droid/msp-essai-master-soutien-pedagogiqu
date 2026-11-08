@@ -123,8 +123,8 @@ for each row execute function public.set_updated_at();
 Cette fonctionnalité concerne uniquement les fiches pédagogiques marquées « publiées » par l’administration. Elle ne synchronise ni les brouillons, ni les listes d’élèves, ni les notes, ni les autres ressources.
 
 1. Dans **SQL Editor**, exécutez `supabase/migrations/20261106_prep_fiches_catalog.sql` depuis le dépôt source.
-2. La migration crée `msp_prep_fiches_catalog`, accessible publiquement en lecture seule, et le bucket public `msp-prep-fiches`. Aucune écriture publique n’est autorisée; les fonctions serveur Vercel utilisent la clé `service_role` pour préparer les dépôts signés et publier le manifeste.
-3. Pour publier, déployez le dépôt source complet sur Vercel avec `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` et `MSP_AI_SESSION_SECRET`, puis utilisez dans l’écran d’administration un code IA de rôle `principal`. Ne mettez jamais la clé `service_role` dans le JavaScript du navigateur.
+2. La migration crée `msp_prep_fiches_catalog`, accessible publiquement en lecture seule, et le bucket public `msp-prep-fiches`. Aucune écriture publique n’est autorisée; les fonctions serveur Vercel utilisent la clé serveur Supabase pour préparer les dépôts signés et publier le manifeste.
+3. Pour publier, déployez le dépôt source complet sur Vercel avec `SUPABASE_URL`, `SUPABASE_SECRET_KEY` (nouvelle clé `sb_secret_...`) et `MSP_AI_SESSION_SECRET`, puis utilisez dans l’écran d’administration un code IA de rôle `principal`. La variable legacy `SUPABASE_SERVICE_ROLE_KEY` reste acceptée si vous avez encore l’ancienne clé `service_role`. Ne mettez jamais une clé serveur Supabase dans le JavaScript du navigateur.
 4. Les appareils des utilisateurs lisent le manifeste public, téléchargent les pages nouvelles et les gardent dans IndexedDB pour un usage hors ligne. Le déploiement statique peut synchroniser les téléchargements, mais ne peut pas publier; le ZIP manuel reste le recours hors ligne.
 5. Limites appliquées : 45 MB par page, 200 MB par publication; les pages de plus de 6 MiB utilisent un envoi reprenable. La limite globale du projet Supabase reste applicable.
 
@@ -140,7 +140,7 @@ Cette fonctionnalité concerne uniquement les fiches pédagogiques marquées « 
 
 3. **Envoyez-moi ces 2 valeurs dans le chat** → je les intègre dans l'application, je reconstruis et je **teste moi-même la connexion** (aller-retour de test, puis nettoyage).
 
-> ⚠️ Ne copiez **jamais** la clé `service_role` (celle-ci doit rester secrète ; gardez-la uniquement dans votre gestionnaire de mots de passe).
+> ⚠️ Ne partagez **jamais** la clé serveur `sb_secret_...` ou l’ancienne clé `service_role` (gardez-la dans les secrets Vercel et un gestionnaire de mots de passe). Seule la clé `anon` / publishable est destinée au navigateur, et les règles RLS doivent rester activées.
 
 ---
 

@@ -6,6 +6,7 @@ import {
   handleAIChat,
   handleProviders,
   handleSession,
+  handlePrepFicheSync,
 } from '../server/aiGateway.js';
 
 function responseMock() {
@@ -93,7 +94,7 @@ test('session absente répond de façon non authentifiée sans exposer de donné
 test('les six adaptateurs envoient au fournisseur uniquement après consentement et session valides', async () => {
   const providers = ['openai', 'anthropic', 'mistral', 'perplexity', 'gemini', 'deepseek'];
   const env = [
-    'SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'MSP_AI_SESSION_SECRET', 'NODE_ENV',
+    'SUPABASE_URL', 'SUPABASE_SECRET_KEY', 'SUPABASE_SERVICE_ROLE_KEY', 'MSP_AI_SESSION_SECRET', 'NODE_ENV',
     ...providers.flatMap(id => [`${id.toUpperCase()}_API_KEY`, `${id.toUpperCase()}_MODEL`, `${id.toUpperCase()}_MODELS`]),
   ];
   // Les noms d’environnement Gemini et Anthropic suivent le mapping de la passerelle.
@@ -101,6 +102,7 @@ test('les six adaptateurs envoient au fournisseur uniquement après consentement
   const restoreEnv = saveEnv([...new Set(env)]);
   const originalFetch = globalThis.fetch;
   try {
+    delete process.env.SUPABASE_SECRET_KEY;
     process.env.SUPABASE_URL = 'https://supabase.test';
     process.env.SUPABASE_SERVICE_ROLE_KEY = 'supabase-service-role-test-secret';
     process.env.MSP_AI_SESSION_SECRET = 'test-session-secret-with-at-least-32-bytes';
@@ -122,8 +124,12 @@ test('les six adaptateurs envoient au fournisseur uniquement après consentement
     };
     globalThis.fetch = async (input, init = {}) => {
       const url = String(input);
-      if (url.includes('/rest/v1/msp_ai_access_tokens?') && init.method === 'PATCH') return new Response(null, { status: 204 });
-      if (url.includes('/rest/v1/msp_ai_access_tokens?')) return Response.json([access]);
+      if (url.includes('/rest/v1/msp_ai_access_tokens?')) {
+        assert.equal(init.headers.apikey, 'supabase-service-role-test-secret');
+        assert.equal(init.headers.Authorization, 'Bearer supabase-service-role-test-secret');
+        if (init.method === 'PATCH') return new Response(null, { status: 204 });
+        return Response.json([access]);
+      }
       throw new Error(`Unexpected mocked login request: ${url}`);
     };
     const login = responseMock();
@@ -195,6 +201,59 @@ test('les six adaptateurs envoient au fournisseur uniquement après consentement
       const sentKey = headers.Authorization || headers['x-api-key'] || headers['x-goog-api-key'];
       assert.ok(String(sentKey).includes(`server-secret-${provider}`), `${provider} reçoit la clé depuis le serveur`);
       assert.equal(response.body.includes(`server-secret-${provider}`), false, `${provider} API key never appears in client response`);
+    }
+  } finally {
+    globalThis.fetch = originalFetch;
+    restoreEnv();
+  }
+});
+
+test('la clé Supabase sb_secret_ est envoyée en apikey uniquement sur REST et Storage', async () => {
+  const env = ['SUPABASE_URL', 'SUPABASE_SECRET_KEY', 'SUPABASE_SERVICE_ROLE_KEY', 'MSP_AI_SESSION_SECRET', 'NODE_ENV'];
+  const restoreEnv = saveEnv(env);
+  const originalFetch = globalThis.fetch;
+  const calls = [];
+  try {
+    process.env.SUPABASE_URL = 'https://supabase.test';
+    process.env.SUPABASE_SECRET_KEY = 'sb_secret_test_opaque';
+    delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+    process.env.MSP_AI_SESSION_SECRET = 'test-session-secret-with-at-least-32-bytes';
+    process.env.NODE_ENV = 'test';
+
+    const code = randomBytes(32).toString('base64url');
+    const access = {
+      id: '8f49d32b-0e40-4e2e-9d83-99b3ce36c01a',
+      token_hash: createHash('sha256').update(code).digest('hex'),
+      display_name: 'Test principal', role: 'principal', is_active: true,
+      expires_at: new Date(Date.now() + 86_400_000).toISOString(), daily_limit: 25,
+    };
+    globalThis.fetch = async (input, init = {}) => {
+      const url = String(input);
+      calls.push({ url, init });
+      if (url.includes('/rest/v1/msp_ai_access_tokens?') && init.method === 'PATCH') return new Response(null, { status: 204 });
+      if (url.includes('/rest/v1/msp_ai_access_tokens?')) return Response.json([access]);
+      if (url.includes('/storage/v1/object/upload/sign/')) return Response.json({ token: 'temporary-upload-token' });
+      throw new Error(`Unexpected mocked Supabase request: ${url}`);
+    };
+
+    const login = responseMock();
+    await handleSession({ method: 'POST', headers: { origin: 'https://msp.example', host: 'msp.example' }, body: { code } }, login);
+    assert.equal(login.statusCode, 200);
+    const cookie = login.headers['Set-Cookie']?.split(';')[0];
+    const signed = responseMock();
+    await handlePrepFicheSync({
+      method: 'POST',
+      headers: { origin: 'https://msp.example', host: 'msp.example', cookie },
+      body: { action: 'sign-upload', snapshotId: 'snapshot_12345678', path: 'snapshot_12345678/prep-123/page-0001.jpg', mimeType: 'image/jpeg', size: 1000 },
+    }, signed);
+    assert.equal(signed.statusCode, 200);
+
+    const supabaseCalls = calls.filter(({ url }) => url.includes('/rest/v1/') || url.includes('/storage/v1/'));
+    assert.ok(supabaseCalls.some(({ url }) => url.includes('/rest/v1/')));
+    assert.ok(supabaseCalls.some(({ url }) => url.includes('/storage/v1/')));
+    for (const { init } of supabaseCalls) {
+      assert.equal(init.headers.apikey, 'sb_secret_test_opaque');
+      assert.equal(init.headers.Authorization, undefined, 'sb_secret_ ne doit jamais être envoyé comme Bearer JWT');
     }
   } finally {
     globalThis.fetch = originalFetch;
