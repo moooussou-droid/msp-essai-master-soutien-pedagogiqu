@@ -8,6 +8,7 @@
     "build": "vite build && node scripts/build-local-llm-worker.mjs && node scripts/postbuild.mjs",
     "build:lowmem": "node scripts/esbuild-prod.mjs && node scripts/postbuild.mjs",
     "preview": "vite preview",
+    "preview:static": "node scripts/preview-server.mjs --root deploy --host 0.0.0.0 --port 8000",
     "deploy:check": "node scripts/deploy-check.mjs",
     "deploy:verify": "node scripts/deploy-verify.mjs",
     "ai:access": "node scripts/manage-ai-access.mjs",
