@@ -66,7 +66,7 @@ export function getAIProviderCatalogue() {
   });
 }
 
-function sendJson(res, status, data, extraHeaders = {}) {
+export function sendJson(res, status, data, extraHeaders = {}) {
   res.statusCode = status;
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
   res.setHeader('Cache-Control', 'no-store, max-age=0');
@@ -75,7 +75,7 @@ function sendJson(res, status, data, extraHeaders = {}) {
   res.end(JSON.stringify(data));
 }
 
-function httpError(status, code, message) {
+export function httpError(status, code, message) {
   const error = new Error(message);
   error.status = status;
   error.code = code;
@@ -109,18 +109,18 @@ function originIsAllowed(req) {
   return parsed.host.toLowerCase() === forwardedHost && ['https:', 'http:'].includes(parsed.protocol);
 }
 
-function requireSameOrigin(req) {
+export function requireSameOrigin(req) {
   if (!originIsAllowed(req)) throw httpError(403, 'ORIGIN_NOT_ALLOWED', 'Origine de la demande refusée.');
 }
 
-function getSupabaseConfig() {
+export function getSupabaseConfig() {
   const url = String(process.env.SUPABASE_URL || '').replace(/\/+$/, '');
   const key = String(process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || '');
   if (!url || !key) throw httpError(503, 'AI_SERVER_NOT_CONFIGURED', 'Le serveur IA n’est pas encore configuré.');
   return { url, key };
 }
 
-function supabaseKeyHeaders(key) {
+export function supabaseKeyHeaders(key) {
   // Les nouvelles clés opaques sb_secret_ ne sont pas des JWT : apikey seulement.
   // Les clés legacy service_role sont des JWT et restent compatibles avec Bearer.
   return key.startsWith('sb_secret_')
@@ -128,7 +128,7 @@ function supabaseKeyHeaders(key) {
     : { apikey: key, Authorization: `Bearer ${key}` };
 }
 
-async function supabaseRequest(path, init = {}) {
+export async function supabaseRequest(path, init = {}) {
   const { url, key } = getSupabaseConfig();
   let response;
   try {
@@ -233,7 +233,7 @@ async function getActiveTokenById(id) {
   return row;
 }
 
-async function sessionForRequest(req) {
+export async function sessionForRequest(req) {
   const token = verifySessionToken(cookieValue(req, COOKIE_NAME));
   if (!token) return null;
   const access = await getActiveTokenById(token.sub);
@@ -652,8 +652,21 @@ async function prepFicheStorageRequest(path, init = {}) {
     throw httpError(503, 'PREP_FICHES_STORAGE_UNAVAILABLE', 'Le stockage cloud des fiches est momentanément injoignable.');
   }
   if (!response.ok) {
+    let storageCode = '';
+    try {
+      const payload = await response.clone().json();
+      const candidate = payload?.code || payload?.statusCode || payload?.error;
+      if (typeof candidate === 'string') storageCode = candidate.replace(/[^A-Za-z0-9_.-]/g, '').slice(0, 64);
+    } catch { /* la réponse Storage n’est pas du JSON */ }
     await response.body?.cancel().catch(() => {});
-    throw httpError(503, 'PREP_FICHES_STORAGE_ERROR', 'Le stockage cloud des fiches n’a pas accepté la demande. Vérifiez la migration et le bucket Supabase.');
+    // Garder la réponse détaillée dans les logs/affichage sans journaliser l’URL,
+    // le nom d’objet, la clé Supabase ou le corps fourni par Storage.
+    console.warn('[prep-fiches] Supabase Storage a refusé la requête', {
+      status: response.status,
+      code: storageCode || undefined,
+    });
+    const diagnostic = storageCode ? ` (HTTP ${response.status}, ${storageCode})` : ` (HTTP ${response.status})`;
+    throw httpError(503, 'PREP_FICHES_STORAGE_ERROR', `Le stockage cloud des fiches n’a pas accepté la demande${diagnostic}. Vérifiez l’URL et la clé serveur Supabase.`);
   }
   if (response.status === 204) return null;
   try { return await response.json(); }
@@ -708,9 +721,11 @@ export async function handlePrepFicheSync(req, res) {
         throw httpError(400, 'PREP_FICHE_UPLOAD_INVALID', 'La page à synchroniser ne respecte pas les limites autorisées.');
       }
       const encodedPath = safeStoragePath(path);
+      // Le client Storage Supabase envoie un objet JSON vide lors de la création
+      // d’une URL signée; le corps explicite évite les refus de certains déploiements.
       const signed = await prepFicheStorageRequest(`object/upload/sign/${PREP_FICHE_STORAGE_BUCKET}/${encodedPath}`, {
         method: 'POST',
-        headers: { 'x-upsert': 'false' },
+        body: JSON.stringify({}),
       });
       let token = typeof signed?.token === 'string' ? signed.token : '';
       if (!token && typeof signed?.url === 'string') {

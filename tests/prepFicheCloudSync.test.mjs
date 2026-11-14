@@ -137,6 +137,8 @@ test('seul le rôle principal peut obtenir des dépôts signés et publier le ma
     assert.equal(storageCalls.length, 1);
     assert.equal(storageCalls[0].init.headers.apikey, 'sb_secret_test_key');
     assert.equal(storageCalls[0].init.headers.Authorization, undefined, 'une clé sb_secret_ opaque ne doit pas être envoyée en Bearer');
+    assert.equal(storageCalls[0].init.body, '{}', 'la création du lien signé envoie un objet JSON vide comme le client Storage Supabase');
+    assert.equal(storageCalls[0].init.headers['x-upsert'], undefined, 'sans upsert, le serveur Storage utilise son comportement par défaut');
 
     const snapshotId = 'snapshot_87654321';
     const manifest = {
