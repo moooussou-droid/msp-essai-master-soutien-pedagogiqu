@@ -148,7 +148,19 @@ export async function supabaseRequest(path, init = {}) {
     // Ne pas recopier dans les logs ou réponses les détails du service/secret.
     throw httpError(503, 'AI_AUTH_DB_ERROR', 'Le service d’accès IA ne répond pas correctement.');
   }
-  return response.status === 204 ? null : response.json();
+  if (response.status === 204 || response.status === 205) return null;
+  let responseText;
+  try { responseText = await response.text(); }
+  catch {
+    throw httpError(503, 'AI_AUTH_DB_UNAVAILABLE', 'Le service d’accès IA a interrompu sa réponse.');
+  }
+  // PostgREST peut répondre 201 Created avec un corps vide pour une écriture
+  // Prefer: return=minimal. C’est une réussite, pas un JSON mal formé.
+  if (!responseText.trim()) return null;
+  try { return JSON.parse(responseText); }
+  catch {
+    throw httpError(503, 'AI_AUTH_DB_INVALID_RESPONSE', 'Le service d’accès IA a renvoyé une réponse illisible.');
+  }
 }
 
 function tokenHash(token) {

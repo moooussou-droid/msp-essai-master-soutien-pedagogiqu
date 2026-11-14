@@ -1,15 +1,22 @@
-CORRECTIF — DÉPÔT SIGNÉ DES FICHES
+CORRECTIF — RÉPONSE JSON VIDE LORS DE LA PUBLICATION DES FICHES
 
-Ce paquet contient les fichiers source modifiés pour le dépôt Vercel lié :
-  moooussou-droid/msp-essai-master-soutien-pedagogiqu (branche main)
+Symptôme
+L’application peut afficher « Unexpected end of JSON input » après le dépôt des pages, même si Supabase a bien enregistré le catalogue. La route serveur interprétait comme du JSON une réponse réussie mais vide (HTTP 201, Prefer: return=minimal).
 
-Installation :
-1. Clonez/ouvrez ce dépôt dans GitHub Desktop.
-2. Extrayez le contenu de cette archive à la racine du clone, en conservant les dossiers server/ et tests/ et en autorisant le remplacement.
-3. Dans GitHub Desktop, vérifiez les deux fichiers modifiés, puis committez et faites Push origin.
-4. Attendez le nouveau déploiement Vercel Production avant de retester la synchronisation.
+Correctif
+Le serveur traite maintenant une réponse 2xx sans corps comme une réussite sans résultat (null). Une réponse non vide mais invalide produit un message d’erreur générique, sans exposer le contenu de la réponse.
 
-Le correctif envoie un objet JSON vide lors de la demande d’URL de dépôt signée
-et affiche/logue uniquement le statut/code HTTP Storage en cas d’échec. Il ne
-contient aucun secret et ne change pas les politiques Supabase. La migration et
-le bucket ont déjà été vérifiés.
+Fichiers à remplacer à la racine du dépôt Vercel
+- server/aiGateway.js
+- tests/prepFicheCloudSync.test.mjs
+
+Installation avec GitHub Desktop
+1. Ouvrez le clone du dépôt moooussou-droid/msp-essai-master-soutien-pedagogiqu (branche main), utilisé par le projet Vercel.
+2. Extrayez cette archive à la racine du clone en conservant les dossiers server/ et tests/, puis autorisez le remplacement des deux fichiers.
+3. Dans GitHub Desktop, vérifiez que seuls ces deux fichiers source/tests sont modifiés.
+4. Créez un commit, par exemple « Corrige réponse JSON vide publication fiches », puis cliquez sur Push origin.
+5. Attendez que le nouveau déploiement Production Vercel soit READY et PROMOTED avant de retester.
+
+Aucune migration, permission Supabase ou clé/secret n’est modifié par ce correctif.
+Le correctif conserve la protection par session principale et les URL de dépôt signées.
+Le test de publication simule désormais la réponse PostgREST HTTP 201 vide, et les tests locaux passent.

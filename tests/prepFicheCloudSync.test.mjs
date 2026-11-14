@@ -108,7 +108,8 @@ test('seul le rôle principal peut obtenir des dépôts signés et publier le ma
       }
       if (url.includes('/rest/v1/msp_prep_fiches_catalog?on_conflict=catalog_id')) {
         catalogCalls.push({ url, init });
-        return new Response(null, { status: 204 });
+        // PostgREST may return 201 Created with an empty body for return=minimal.
+        return new Response(null, { status: 201 });
       }
       throw new Error(`Unexpected mocked request: ${url}`);
     };
