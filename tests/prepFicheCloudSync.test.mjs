@@ -172,6 +172,39 @@ test('seul le rôle principal peut obtenir des dépôts signés et publier le ma
     }), invalid);
     assert.equal(invalid.statusCode, 400);
     assert.equal(invalid.json().error, 'PREP_FICHES_MANIFEST_INVALID');
+
+    const createSizedManifest = (sizedSnapshotId, totalBytes) => {
+      const pageSizes = Array.from({ length: 12 }, (_, index) => index < 11 ? 45_000_000 : totalBytes - 11 * 45_000_000);
+      return {
+        ...manifest,
+        snapshotId: sizedSnapshotId,
+        totalPages: pageSizes.length,
+        totalBytes,
+        fiches: [{
+          ...manifest.fiches[0],
+          pages: pageSizes.map((size, index) => ({
+            path: `${sizedSnapshotId}/prep-456/page-${String(index + 1).padStart(4, '0')}.jpg`,
+            w: 800, h: 1000, mimeType: 'image/jpeg', size,
+          })),
+          pageCount: pageSizes.length,
+        }],
+      };
+    };
+    const maxCatalogBytes = 500 * 1024 * 1024;
+    const atLimit = responseMock();
+    await handlePrepFicheSync(request(principalCookie, {
+      action: 'publish', manifest: createSizedManifest('snapshot_at_500mib', maxCatalogBytes),
+    }), atLimit);
+    assert.equal(atLimit.statusCode, 200, 'un catalogue de 500 MiB est accepté');
+
+    const callsBeforeOverLimit = catalogCalls.length;
+    const overLimit = responseMock();
+    await handlePrepFicheSync(request(principalCookie, {
+      action: 'publish', manifest: createSizedManifest('snapshot_over_500mib', maxCatalogBytes + 1),
+    }), overLimit);
+    assert.equal(overLimit.statusCode, 413);
+    assert.equal(overLimit.json().error, 'PREP_FICHES_TOO_LARGE');
+    assert.equal(catalogCalls.length, callsBeforeOverLimit, 'un catalogue trop volumineux est refusé avant toute écriture Supabase');
   } finally {
     globalThis.fetch = originalFetch;
     restoreEnv();
@@ -267,6 +300,7 @@ test('le client récupère automatiquement une nouvelle version, la garde en cac
     const requireFromBundle = createRequire(join(tempDir, 'prepFicheCloudSync.js'));
     const cloudSync = requireFromBundle('./prepFicheCloudSync.js');
     const prepFiches = requireFromBundle('./prepFiches.js');
+    assert.equal(cloudSync.PREP_FICHE_CLOUD_LIMITS.totalBytes, 500 * 1024 * 1024, 'le client applique la même limite de 500 MiB que le serveur');
 
     const bytesV1 = Buffer.from([1, 2, 3, 4]);
     const bytesV2 = Buffer.from([5, 6, 7, 8]);

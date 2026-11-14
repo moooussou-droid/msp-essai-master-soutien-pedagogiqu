@@ -583,7 +583,7 @@ export async function handleAIChat(req, res) {
 
 const PREP_FICHE_STORAGE_BUCKET = 'msp-prep-fiches';
 const PREP_FICHE_PAGE_MAX_BYTES = 45_000_000;
-const PREP_FICHE_TOTAL_MAX_BYTES = 200 * 1024 * 1024;
+const PREP_FICHE_TOTAL_MAX_BYTES = 500 * 1024 * 1024;
 const PREP_FICHE_MAX_PAGES = 10_000;
 const PREP_FICHE_ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/bmp', 'image/avif']);
 
@@ -636,7 +636,7 @@ function validatePrepFicheCloudManifest(value) {
       totalPages++;
       totalBytes += page.size;
       if (totalPages > PREP_FICHE_MAX_PAGES || totalBytes > PREP_FICHE_TOTAL_MAX_BYTES) {
-        throw httpError(413, 'PREP_FICHES_TOO_LARGE', 'Le catalogue dépasse la limite de 200 Mo ou contient trop de pages.');
+        throw httpError(413, 'PREP_FICHES_TOO_LARGE', 'Le catalogue dépasse la limite de 500 MiB ou contient trop de pages.');
       }
     }
   }

@@ -297,7 +297,7 @@ export default function AdminPrepFichesScreen() {
             </form>
           )}
           <p className="mt-2 text-xs text-emerald-900">
-            Connexion requise au déploiement Vercel avec API. Chaque page doit faire moins de 45 Mo; le catalogue complet est limité à 200 Mo.
+            Connexion requise au déploiement Vercel avec API. Chaque page doit faire moins de 45 Mo; le catalogue cloud complet est limité à 500 MiB.
             Les pages de plus de 6 MiB utilisent un envoi reprenable. Le ZIP statique peut télécharger les fiches et servir de secours, mais ne peut pas publier.
           </p>
           {cloudProgress && cloudBusy && <p role="status" className="mt-2 text-sm font-medium text-emerald-900">{cloudProgress}</p>}

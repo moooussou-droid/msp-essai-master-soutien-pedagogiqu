@@ -5,7 +5,7 @@ const STORAGE_BUCKET = 'msp-prep-fiches';
 const CATALOG_TABLE = 'msp_prep_fiches_catalog';
 const CATALOG_CACHE_KEY = 'msp_prep_fiches_cloud_version_v1';
 const MAX_PAGE_BYTES = 45_000_000;
-const MAX_TOTAL_BYTES = 200 * 1024 * 1024;
+const MAX_TOTAL_BYTES = 500 * 1024 * 1024;
 const MAX_PAGES = 10_000;
 const MAX_FICHES = 5_000;
 const ALLOWED_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/bmp', 'image/avif']);
@@ -513,7 +513,7 @@ function buildUploadTasks(fiches: PrepFiche[], snapshotId: string): { tasks: Upl
       if (typeof page?.dataUrl !== 'string') throw new Error(`Une page de « ${fiche.titre} » est manquante.`);
       const info = estimatedDataUrlBytes(page.dataUrl);
       totalBytes += info.size;
-      if (totalBytes > MAX_TOTAL_BYTES) throw new Error('Le catalogue dépasse la limite de 200 Mo. Publiez moins de fiches ou réduisez la taille de certaines pages.');
+      if (totalBytes > MAX_TOTAL_BYTES) throw new Error('Le catalogue dépasse la limite de 500 MiB. Publiez moins de fiches ou réduisez la taille de certaines pages.');
       const extension = extensionForMime(info.mimeType);
       const path = `${snapshotId}/${safeFicheId}/page-${String(index + 1).padStart(4, '0')}.${extension}`;
       pages.push({ path, w: page.w, h: page.h, mimeType: info.mimeType, size: info.size });
