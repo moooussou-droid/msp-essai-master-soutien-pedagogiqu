@@ -1,21 +1,73 @@
-MASTER SOUTIEN PÉDAGOGIQUE — DOSSIER PRÊT À PUBLIER
+══════════════════════════════════════════════════════════════
+  MASTER SOUTIEN PÉDAGOGIQUE — DOSSIER DE PUBLICATION PRÊT
+══════════════════════════════════════════════════════════════
 
-Ce dossier est l'application déjà construite.
-Son fichier index.html doit rester à la racine du site publié.
+Ce dossier contient l'application COMPLÈTE, déjà construite.
+AUCUNE commande n'est nécessaire pour la mettre en ligne.
 
-PUBLIER GRATUITEMENT
+IA LOCALE SUR L'APPAREIL :
+  - Publiez en HTTPS, choisissez Qwen3 local dans le panneau IA,
+    puis téléchargez le modèle (moins de 1 Go selon le backend).
+  - Après mise en cache, les prompts restent sur l'appareil; le
+    modèle fonctionne hors ligne tant que le navigateur garde son cache.
+  - Le modèle 0,6B est moins puissant que les meilleurs modèles cloud.
 
-Netlify :
-1. Ouvrez https://app.netlify.com/drop
-2. Glissez ce dossier deploy/ entier, ou tout son contenu, dans la zone de dépôt.
+GUIDE UTILISATEUR :
+  - Le raccourci du Guide est placé en tête de l'accueil; le manuel fonctionne hors ligne.
 
-Vercel :
-1. Ouvrez https://vercel.com/drag-drop (ou Vercel → New → Deploy)
-2. Glissez ce dossier deploy/ entier.
+PRÉPARATION DE FICHES PAR IA :
+  - Les parcours dédiés sont temporairement indisponibles pendant leur développement,
+    y compris par accès direct ou ancien favori.
+  - Le chat IA local reste disponible pour les autres usages, mais bloque la rédaction
+    de fiches complètes. Les fiches manuelles restent accessibles.
 
-À NE PAS DÉPOSER :
-- le dossier source du projet (src/, package.json, index.html avec /src/main.tsx) ;
-- un fichier .zip non décompressé lorsque l'outil demande un dossier.
+FICHES PUBLIÉES PAR L'ADMINISTRATION — SYNCHRONISATION :
+  - Les appareils vérifient automatiquement le catalogue à l'ouverture,
+    au retour en ligne et périodiquement; les pages reçues restent hors ligne.
+  - La publication admin exige le projet source Vercel, les migrations
+    Supabase et une session IA de rôle principal.
+  - Le site statique peut télécharger les fiches publiques, mais pas les publier.
+    Le ZIP manuel reste un transfert de secours pour les appareils hors ligne.
 
-APRÈS PUBLICATION, depuis le dossier source :
-npm run deploy:verify https://votre-lien
+POÉSIES, CHANTS, CONTES ET COMPTINES — PUBLICATIONS ADMIN :
+  - Le catalogue MSP accepte MP3, MP4, TXT, DOC/DOCX et PDF (45 Mo maximum par fichier).
+  - Les utilisateurs consultent le catalogue public; chaque appareil peut télécharger
+    les fichiers pour un accès hors connexion. Les ajouts locaux ne partent pas au cloud.
+  - La publication exige la fonction API Vercel et la migration Supabase
+    20261107_oral_resources_catalog.sql.
+
+LIMITATION : ce dossier statique n'inclut pas /api/ai/*; les fournisseurs distants et la publication admin exigent le projet source Vercel + secrets.
+
+NETLIFY (2 minutes, gratuit, sans compte) :
+  1. Ouvrez https://app.netlify.com/drop
+  2. Ouvrez CE dossier et glissez-DÉPOSEZ SON CONTENU
+     (ce qui se trouve DANS ce dossier) dans la zone.
+  3. C'est en ligne ! ⚠️ Notez l'adresse affichée : c'est votre lien
+     à partager. Pour le personnaliser, créez un compte gratuit puis
+     allez dans « Domain settings » (ex. master-soutien.netlify.app).
+
+TÉLÉVERSEMENT WEB DANS UN DÉPÔT GITHUB (limite affichée : 25 Mo/fichier) :
+  - L'écran « Drag files here to add them to your repository » est celui de GitHub.
+    Il ne faut pas ajouter le ZIP comme fichier du site : GitHub ne le décompresse pas.
+  - Le runtime est livré sous forme .wasm.gz (<25 Mo); vercel.json le sert
+    avec Content-Encoding:gzip. Le navigateur le décompresse automatiquement.
+  - Extrayez MSP-v78-deploiement-vercel.zip sur l'ordinateur, puis ajoutez
+    le CONTENU extrait à la racine du dépôt (index.html, assets/, vercel.json…).
+  - N'ajoutez pas l'ancien .wasm non compressé : il dépasse la limite web.
+
+VERCEL DROP (déploiement direct, sans dépôt GitHub) :
+  1. Ouvrez https://vercel.com/drop.
+  2. Déposez MSP-v78-deploiement-vercel.zip directement.
+  3. Vercel décompresse l'archive; le runtime complet reste disponible.
+
+POUR METTRE À JOUR (le lien ne change pas) :
+  - Netlify : sur votre site, onglet « Deploys » → glissez à nouveau
+    le contenu du dossier deploy/ reconstruit.
+  - Vercel/GitHub : remplacez les fichiers par le nouveau contenu deploy/
+    puis validez le commit; Vercel redéploie le dépôt.
+
+Gardez la structure complète : index.html, vercel.json et tous les assets/.
+Le WASM gzip conserve le runtime complet et la prise en charge locale IA.
+
+Vérifier que votre lien est sain :  npm run deploy:verify <votre-lien>
+══════════════════════════════════════════════════════════════

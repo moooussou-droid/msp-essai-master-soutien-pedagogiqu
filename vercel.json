@@ -1,14 +1,5 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "npm run build:lowmem",
-  "outputDirectory": "dist",
-  "framework": null,
-  "functions": {
-    "api/ai/chat.js": { "maxDuration": 150 },
-    "api/ai/prep-fiches.js": { "maxDuration": 60 },
-    "api/ai/session.js": { "maxDuration": 30 },
-    "api/ai/providers.js": { "maxDuration": 10 }
-  },
   "cleanUrls": false,
   "trailingSlash": false,
   "headers": [

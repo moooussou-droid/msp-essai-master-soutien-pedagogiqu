@@ -4,7 +4,7 @@
 //   → À chaque redéploiement, les utilisateurs reçoivent la NOUVELLE version
 //     (et non plus l'ancienne indéfiniment, comme avec un cache-first).
 // - Ressources statiques (icônes, manifest) : cache d'abord, réseau en secours.
-const CACHE_NAME = 'master-soutien-v72-refonte';
+const CACHE_NAME = 'master-soutien-v74-local-llm';
 
 const ASSETS = [
   './',
@@ -54,7 +54,9 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames
-          .filter((name) => name !== CACHE_NAME)
+          // Le modèle LLM local (poids + runtimes WASM) vit dans un cache dédié.
+          // Ne jamais le supprimer lors d’une mise à jour de l’application : il peut peser près de 1 Go.
+          .filter((name) => name !== CACHE_NAME && !name.startsWith('msp-local-llm-cache-'))
           .map((name) => caches.delete(name))
       );
     })

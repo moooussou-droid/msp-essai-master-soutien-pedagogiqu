@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#006b4f" />
+    <meta name="description" content="Master Soutien Pédagogique - Notes, bulletins et accompagnement pour les enseignants du primaire et du secondaire au Bénin" />
+    <!-- INSTALLATION SUR iPHONE / iPAD (v34) : l'application s'ajoute à l'écran
+         d'accueil iOS et s'ouvre en plein écran, sans barre de navigateur. -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Master Soutien" />
+    <meta name="application-name" content="Master Soutien" />
+    <meta name="format-detection" content="telephone=no" />
+    
+    <title>Master Soutien Pédagogique</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="./manifest.json" />
+    
+    <!-- Icons -->
+    <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png" />
+    <link rel="apple-touch-icon" href="./icon-192.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="./icon-192.png" />
+    <link rel="apple-touch-icon" sizes="167x167" href="./icon-192.png" />
+    <link rel="apple-touch-icon" sizes="152x152" href="./icon-192.png" />
+    <link rel="apple-touch-startup-image" href="./icon-512.png" />
+      <link rel="stylesheet" href="./assets/index-7ceff91a.css" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="./assets/main-CRP3WMC3.js"></script>
+    <!-- Garde-fou : si cette page SOURCE a été déposée telle quelle sur
+         Netlify/Vercel (au lieu du contenu de dist/ ou deploy/), le script
+         /src/main.tsx est introuvable et l'application ne démarre pas.
+         Le contrôle ci-dessous ne s'active donc QUE pour le gabarit source
+         servi sans Vite : il ne doit jamais masquer l'application construite
+         (script ./assets/main-…) ni l'aperçu de développement (@vite/client),
+         même si leur chargement prend plus de quelques secondes. -->
+    <script>
+      (function () {
+        var sourceScript = document.querySelector('script[src*="/src/main"]');
+        var viteClient = document.querySelector('script[src*="/@vite/client"]');
+        if (!sourceScript || viteClient) return; // app construite ou dev Vite : rien à signaler
+
+        var root = document.getElementById('root');
+        if (!root) return;
+
+        var err = null;
+        var observer = null;
+        function cleanup() {
+          if (err && err.parentNode) err.parentNode.removeChild(err);
+          if (observer) observer.disconnect();
+        }
+        function appStarted() {
+          if (root.childElementCount > 0) { cleanup(); return true; }
+          return false;
+        }
+        if (appStarted()) return;
+        if (window.MutationObserver) {
+          observer = new MutationObserver(appStarted);
+          observer.observe(root, { childList: true });
+        }
+
+        window.setTimeout(function () {
+          if (appStarted()) return;
+          err = document.createElement('div');
+          err.setAttribute('style',
+            'position:fixed;inset:0;z-index:99999;background:#f8fafc;color:#0f172a;' +
+            'font-family:system-ui,-apple-system,sans-serif;display:flex;align-items:center;' +
+            'justify-content:center;padding:24px;text-align:center');
+          err.innerHTML =
+            '<div style="max-width:520px">' +
+            '<div style="font-size:44px">⚠️</div>' +
+            '<h1 style="font-size:20px;margin:12px 0 8px">Ce n\'est pas l\'application</h1>' +
+            '<p style="font-size:14px;color:#475569;line-height:1.6">' +
+            'Vous avez publié le <b>dossier source</b> du projet au lieu de l\'application construite.<br>' +
+            'L\'application réelle se trouve dans le dossier <b>deploy/</b> (ou dist/) : ' +
+            'ouvrez ce dossier et déposez son <b>contenu</b> sur ' +
+            '<b>app.netlify.com/drop</b> ou <b>vercel.com/drag-drop</b>.</p>' +
+            '<p style="font-size:12px;color:#94a3b8">Astuce : dans le dossier de l\'application, ' +
+            'exécutez <code style="background:#e2e8f0;padding:2px 6px;border-radius:4px">npm run deploy:check</code> ' +
+            'pour préparer la publication.</p>' +
+            '</div>';
+          document.body.appendChild(err);
+        }, 3000);
+      })();
+    </script>
+  </body>
+</html>
