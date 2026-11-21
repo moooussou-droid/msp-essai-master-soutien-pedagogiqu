@@ -99,6 +99,7 @@ import AdminDashboardScreen from './components/AdminDashboardScreen';
 import AccessGate from './components/AccessGate';
 import SubscriptionActivationScreen from './components/SubscriptionActivationScreen';
 import { isAnyAdminSession } from './utils/adminSession';
+import { resolveRouteAccess } from './utils/routeAccess';
 import ClassDocumentsScreen from './components/ClassDocumentsScreen';
 import TeacherToolkitScreen from './components/TeacherToolkitScreen';
 import FichesPedagogiquesScreen from './components/FichesPedagogiquesScreen';
@@ -3882,7 +3883,6 @@ function AppGate() {
     return () => window.clearInterval(id);
   }, []);
 
-  const route = location.pathname.replace(/\/+$/, '') || '/';
   /*
    * v48 — L'ESPACE PARENTS EST PUBLIC.
    *
@@ -3894,25 +3894,21 @@ function AppGate() {
    *
    * Attention : seule '/suivi-enfant' est publique. La generation des
    * codes ('/suivi-enfant/codes') releve de l'enseignant et reste donc
-   * derriere l'abonnement — elle est exclue plus bas.
+   * derriere l'abonnement — elle est exclue dans les règles de route.
    */
-  const publicRoutes = ['/activation', '/verify', '/suivi-enfant'];
-  // L’écran exact de connexion admin reste accessible sans abonnement;
-  // aucun autre écran de l’espace admin ne l’est sans session valide.
-  const isAdminLoginRoute = route === '/admin-dashboard' || route === '/equipe';
-  // Les outils de codes parents restent réservés aux enseignants abonnés.
-  const isTeacherParentTool = route === '/suivi-enfant/codes' || route.startsWith('/suivi-enfant/codes/');
-  const adminRoutes = ['/admin-dashboard', '/equipe', '/admin-cours', '/admin-fiches-preparation'];
-  const isAdminRoute = adminRoutes.some((path) => route === path || route.startsWith(`${path}/`));
-  const adminWorkspaceAllowed = isAdminRoute && isAnyAdminSession();
-  const isPublicRoute = isAdminLoginRoute
-    || (publicRoutes.some((path) => route === path || route.startsWith(`${path}/`)) && !isTeacherParentTool)
-    || adminWorkspaceAllowed;
   // L'essai actif ouvre l'application; un abonnement expiré ne le fait plus.
   const onTrial = trial.active;
   const activation = getActivationChrono();
   const subscriptionActive = activated && activation.active && !activation.expired;
-  const canOpen = subscriptionActive || onTrial || isPublicRoute;
+  const routeAccess = resolveRouteAccess(location.pathname, {
+    subscriptionActive,
+    trialActive: onTrial,
+    hasAdminSession: isAnyAdminSession(),
+  });
+  const { route, isAdminLoginRoute, isPublicRoute, canOpen } = routeAccess;
+  // Une connexion admin reste accessible sans abonnement, mais n'est pas une
+  // permission générale : seules ces deux routes de connexion en bénéficient.
+  const bypassesPlanGates = isPublicRoute || isAdminLoginRoute;
   const openHashRoute = (path: string) => navigate(path);
 
   if (!canOpen) {
@@ -3934,7 +3930,7 @@ function AppGate() {
   // code École ; la bloquer empêcherait justement de s'abonner.
   const plan = getActivationChrono().plan;
   const onSchoolPage = isSchoolDiscoveryPath(route);
-  if (subscriptionActive && plan === 'essentiel' && !isPublicRoute && !onSchoolPage && !isAllowedForEssentiel(route)) {
+  if (subscriptionActive && plan === 'essentiel' && !bypassesPlanGates && !onSchoolPage && !isAllowedForEssentiel(route)) {
     return <UpgradeScreen blockedPath={route} />;
   }
 
@@ -3944,7 +3940,7 @@ function AppGate() {
    * la version d'essai doit donner envie, pas tout offrir. Le prospect
    * decouvre ainsi l'existence de la formule Pro.
    */
-  if (!subscriptionActive && onTrial && !isPublicRoute && isProPath(route)) {
+  if (!subscriptionActive && onTrial && !bypassesPlanGates && isProPath(route)) {
     return <UpgradeScreen blockedPath={route} targetPlan="pro" />;
   }
 
@@ -3958,7 +3954,7 @@ function AppGate() {
    * v64 : les formules ÉCOLE (6000/10000 F) incluent tout le Pro —
    * hasProPerimetre() les laisse donc passer au même titre.
    */
-  if (subscriptionActive && !hasProPerimetre(plan) && !isPublicRoute && isProPath(route)) {
+  if (subscriptionActive && !hasProPerimetre(plan) && !bypassesPlanGates && isProPath(route)) {
     return <UpgradeScreen blockedPath={route} targetPlan="pro" />;
   }
 

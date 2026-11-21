@@ -121,7 +121,7 @@ const ROLE_PERMISSIONS: Record<AdminRole, string[]> = {
 const ROLE_MISSION: Record<AdminRole, string> = {
   'Super Administrateur': 'Pilote l’application : nomme les membres de l’équipe et génère les codes d’accès.',
   'Gestionnaire Technique': 'Veille au bon fonctionnement technique : sauvegardes, diagnostic, stockage, mises à jour et cache.',
-  'Responsable Ressources': 'Publie et met à jour les programmes, vidéos, fiches et cours en ligne.',
+  'Responsable Ressources': 'Publie et met à jour les programmes, vidéos, fiches, cours en ligne et ressources orales.',
   'Responsable Annonces': 'Gère les annonces, le recrutement et les publicités partenaires.',
   'Modérateur': 'Contrôle la qualité et la conformité des contenus publiés.',
   'Support': 'Accompagne les enseignants utilisateurs au quotidien.',
@@ -692,7 +692,14 @@ export default function AdminDashboardScreen({ loginMode = 'team' }: { loginMode
           <button onClick={login} disabled={!ownerMode && !teamLoaded} className="w-full rounded-xl bg-emerald-800 py-3 font-bold text-white disabled:opacity-50">
             {ownerMode ? 'Ouvrir l’administration principale' : 'Ouvrir mon espace équipe'}
           </button>
-          <button onClick={() => navigate('/')} className="mt-3 w-full py-2 text-sm font-semibold text-slate-500">Retour à l’accueil</button>
+          <button
+            type="button"
+            data-testid="btn-retour-activation"
+            onClick={() => navigate('/activation')}
+            className="mt-3 w-full py-2 text-sm font-semibold text-slate-500"
+          >
+            Retour à l’écran d’activation
+          </button>
           <div className="mt-3 flex justify-center gap-4 text-xs">
             <button onClick={() => navigate(ownerMode ? '/equipe' : '/admin-dashboard')} className="text-emerald-800 underline underline-offset-4">
               {ownerMode ? 'Accès équipe' : 'Accès principal'}
