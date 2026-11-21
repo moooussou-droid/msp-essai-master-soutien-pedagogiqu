@@ -1,16 +1,20 @@
-import { getAllPrepFiches, markPrepFichesDistributed, replaceCloudPublishedPrepFiches, PREP_FICHE_PUBLISHER_ID, type PrepFiche, type PrepFichePage } from './prepFiches';
+import {
+  getAllPrepFiches, getPrepFiche, markPrepFichesDistributed, saveCloudPublishedPrepFiche,
+  PREP_FICHE_PUBLISHER_ID, type PrepFiche, type PrepFichePage,
+} from './prepFiches';
 import { isCloudConfigured, SUPABASE_ANON_KEY, SUPABASE_URL } from './cloudConfig';
 
 const STORAGE_BUCKET = 'msp-prep-fiches';
 const CATALOG_TABLE = 'msp_prep_fiches_catalog';
-const CATALOG_CACHE_KEY = 'msp_prep_fiches_cloud_version_v1';
+const CATALOG_CACHE_KEY = 'msp_prep_fiches_cloud_manifest_v2';
+const LEGACY_CATALOG_CACHE_KEY = 'msp_prep_fiches_cloud_version_v1';
 const MAX_PAGE_BYTES = 45_000_000;
-const MAX_TOTAL_BYTES = 500 * 1024 * 1024;
+const MAX_TOTAL_BYTES = 850 * 1024 * 1024;
 const MAX_PAGES = 10_000;
 const MAX_FICHES = 5_000;
 const ALLOWED_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/bmp', 'image/avif']);
 
-interface CloudPageDescriptor {
+export interface CloudPageDescriptor {
   path: string;
   w: number;
   h: number;
@@ -18,7 +22,7 @@ interface CloudPageDescriptor {
   size: number;
 }
 
-interface CloudFicheDescriptor {
+export interface CloudFicheDescriptor {
   id: string;
   classe: string;
   matiere: string;
@@ -31,7 +35,7 @@ interface CloudFicheDescriptor {
   updatedAt?: number;
 }
 
-interface CloudManifest {
+export interface CloudManifest {
   format: 'msp-prep-fiches-cloud';
   schemaVersion: 1;
   publisherId: string;
@@ -49,10 +53,12 @@ interface CloudCatalogRow {
 }
 
 export interface PrepFicheCloudSyncResult {
+  /** true si le manifeste local a été créé ou remplacé; aucune page n'est téléchargée ici. */
   updated: boolean;
   fiches: number;
   pages: number;
   version: string | null;
+  catalog: CloudManifest | null;
 }
 
 export interface PrepFicheCloudPublishResult {
@@ -256,72 +262,129 @@ async function mapWithConcurrency<T, R>(items: T[], concurrency: number, task: (
   return results;
 }
 
-function localCatalogVersion(): string {
-  try { return localStorage.getItem(CATALOG_CACHE_KEY) || ''; }
-  catch { return ''; }
+export function loadCachedPublishedPrepFicheCatalog(): CloudManifest | null {
+  try {
+    const raw = globalThis.localStorage?.getItem(CATALOG_CACHE_KEY);
+    return raw ? validateCloudManifest(JSON.parse(raw)) : null;
+  } catch {
+    return null;
+  }
 }
 
-function setLocalCatalogVersion(version: string): void {
-  try { localStorage.setItem(CATALOG_CACHE_KEY, version); }
-  catch { /* le catalogue reste en cache dans IndexedDB même si localStorage est plein */ }
+function setCachedPublishedPrepFicheCatalog(manifest: CloudManifest): void {
+  try { globalThis.localStorage?.setItem(CATALOG_CACHE_KEY, JSON.stringify(manifest)); }
+  catch { /* la liste reste en mémoire pendant la session si le stockage local est indisponible */ }
 }
 
 export function invalidatePrepFicheCloudCache(): void {
-  try { localStorage.removeItem(CATALOG_CACHE_KEY); }
-  catch { /* le prochain contrôle compare aussi les identifiants en IndexedDB */ }
+  try {
+    globalThis.localStorage?.removeItem(CATALOG_CACHE_KEY);
+    globalThis.localStorage?.removeItem(LEGACY_CATALOG_CACHE_KEY);
+  } catch { /* le catalogue peut être rechargé à la prochaine action explicite */ }
 }
 
-function localCacheMatches(fiches: PrepFiche[], manifest: CloudManifest): boolean {
-  const local = fiches.filter((fiche) => fiche.distribution?.publisherId === PREP_FICHE_PUBLISHER_ID);
-  const expectedIds = manifest.fiches.map((fiche) => fiche.id).sort();
-  const localIds = local.map((fiche) => fiche.id).sort();
-  if (expectedIds.length !== localIds.length || expectedIds.some((id, index) => id !== localIds[index])) return false;
-  const localById = new Map(local.map((fiche) => [fiche.id, fiche]));
-  return manifest.fiches.every((fiche) => {
-    const cached = localById.get(fiche.id);
-    return Boolean(cached?.published && cached.pages.length === fiche.pageCount
-      && cached.pages.every((page) => typeof page.dataUrl === 'string' && page.dataUrl.startsWith('data:image/')));
-  });
+function emptyCloudManifest(): CloudManifest {
+  return {
+    format: 'msp-prep-fiches-cloud',
+    schemaVersion: 1,
+    publisherId: PREP_FICHE_PUBLISHER_ID,
+    snapshotId: 'empty000',
+    publishedAt: new Date(0).toISOString(),
+    totalPages: 0,
+    totalBytes: 0,
+    fiches: [],
+  };
 }
 
-/** Télécharge uniquement la nouvelle version, puis remplace atomiquement le paquet officiel en IndexedDB. */
+/** Une fiche n'est à jour localement que si les métadonnées et la version éditoriale correspondent. */
+export function isCloudPublishedPrepFicheCurrent(
+  local: PrepFiche | undefined,
+  descriptor: CloudFicheDescriptor,
+): boolean {
+  const sameCloudPaths = Boolean(local?.distribution?.cloudPaths
+    && local.distribution.cloudPaths.length === descriptor.pages.length
+    && local.distribution.cloudPaths.every((path, index) => path === descriptor.pages[index]?.path));
+  const sameRevision = descriptor.updatedAt !== undefined
+    ? local?.updatedAt === descriptor.updatedAt
+    : sameCloudPaths;
+  return Boolean(local?.published
+    && local.pages.length === descriptor.pageCount
+    && local.pages.every((page) => typeof page.dataUrl === 'string' && page.dataUrl.startsWith('data:image/'))
+    && local.pageCount === descriptor.pageCount
+    && local.titre === descriptor.titre
+    && local.classe === descriptor.classe
+    && local.matiere === descriptor.matiere
+    && (local.description || '') === (descriptor.description || '')
+    && local.createdAt === descriptor.createdAt
+    && sameRevision);
+}
+
+/** Lit et met en cache uniquement le manifeste; les pages ne sont jamais téléchargées par cette vérification. */
 async function performPublishedPrepFichesCloudSync(): Promise<PrepFicheCloudSyncResult> {
+  const previous = loadCachedPublishedPrepFicheCatalog();
   const row = await readPublicCatalog();
-  if (!row) return { updated: false, fiches: 0, pages: 0, version: null };
-
-  const existing = await getAllPrepFiches();
-  if (localCatalogVersion() === row.version && localCacheMatches(existing, row.manifest)) {
-    return { updated: false, fiches: row.manifest.fiches.length, pages: row.manifest.totalPages, version: row.version };
+  if (!row) {
+    const catalog = emptyCloudManifest();
+    setCachedPublishedPrepFicheCatalog(catalog);
+    return {
+      updated: Boolean(previous && previous.fiches.length > 0),
+      fiches: 0,
+      pages: 0,
+      version: null,
+      catalog,
+    };
   }
 
-  const fetchedFiches = await mapWithConcurrency(row.manifest.fiches, 1, async (descriptor) => {
-    const pages = await mapWithConcurrency(descriptor.pages, 2, async (page) => ({
-      dataUrl: await fetchPageAsDataUrl(page),
-      w: page.w,
-      h: page.h,
-    }));
-    return {
-      id: descriptor.id,
-      classe: descriptor.classe,
-      matiere: descriptor.matiere,
-      titre: descriptor.titre,
-      description: descriptor.description,
-      pages,
-      pageCount: pages.length,
-      published: true,
-      createdAt: descriptor.createdAt,
-      updatedAt: descriptor.updatedAt,
-    } satisfies PrepFiche;
-  });
+  setCachedPublishedPrepFicheCatalog(row.manifest);
+  return {
+    updated: previous?.snapshotId !== row.version,
+    fiches: row.manifest.fiches.length,
+    pages: row.manifest.totalPages,
+    version: row.version,
+    catalog: row.manifest,
+  };
+}
 
-  await replaceCloudPublishedPrepFiches(fetchedFiches);
-  setLocalCatalogVersion(row.version);
-  return { updated: true, fiches: fetchedFiches.length, pages: row.manifest.totalPages, version: row.version };
+/** Récupère la version courante d'une seule fiche, puis la conserve dans IndexedDB pour le mode hors connexion. */
+export async function downloadPublishedPrepFicheFromCloud(ficheOrDescriptor: string | CloudFicheDescriptor): Promise<PrepFiche> {
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+    throw new Error('Connectez-vous à Internet pour enregistrer cette fiche sur cet appareil.');
+  }
+  const catalog = loadCachedPublishedPrepFicheCatalog();
+  const ficheId = typeof ficheOrDescriptor === 'string' ? ficheOrDescriptor : ficheOrDescriptor.id;
+  const descriptor = catalog?.fiches.find((item) => item.id === ficheId)
+    || (typeof ficheOrDescriptor === 'string' ? undefined : ficheOrDescriptor);
+  if (!descriptor) throw new Error(catalog
+    ? 'Cette fiche n’est plus présente dans le catalogue chargé. Actualisez le catalogue puis réessayez.'
+    : 'Chargez d’abord le catalogue public des fiches.');
+
+  const existing = await getPrepFiche(ficheId);
+  if (isCloudPublishedPrepFicheCurrent(existing, descriptor)) return existing!;
+
+  const pages = await mapWithConcurrency(descriptor.pages, 2, async (page) => ({
+    dataUrl: await fetchPageAsDataUrl(page),
+    w: page.w,
+    h: page.h,
+  }));
+  const fetchedFiche: PrepFiche = {
+    id: descriptor.id,
+    classe: descriptor.classe,
+    matiere: descriptor.matiere,
+    titre: descriptor.titre,
+    description: descriptor.description,
+    pages,
+    pageCount: pages.length,
+    published: true,
+    createdAt: descriptor.createdAt,
+    updatedAt: descriptor.updatedAt,
+  };
+  await saveCloudPublishedPrepFiche(fetchedFiche, descriptor.pages.map((page) => page.path));
+  return (await getPrepFiche(ficheId)) || fetchedFiche;
 }
 
 let cloudCatalogSyncPromise: Promise<PrepFicheCloudSyncResult> | null = null;
 
-export async function syncPublishedPrepFichesFromCloud(): Promise<PrepFicheCloudSyncResult> {
+export async function syncPublishedPrepFicheCatalogFromCloud(): Promise<PrepFicheCloudSyncResult> {
   if (cloudCatalogSyncPromise) return cloudCatalogSyncPromise;
   const current = performPublishedPrepFichesCloudSync();
   cloudCatalogSyncPromise = current;
@@ -513,7 +576,7 @@ function buildUploadTasks(fiches: PrepFiche[], snapshotId: string): { tasks: Upl
       if (typeof page?.dataUrl !== 'string') throw new Error(`Une page de « ${fiche.titre} » est manquante.`);
       const info = estimatedDataUrlBytes(page.dataUrl);
       totalBytes += info.size;
-      if (totalBytes > MAX_TOTAL_BYTES) throw new Error('Le catalogue dépasse la limite de 500 MiB. Publiez moins de fiches ou réduisez la taille de certaines pages.');
+      if (totalBytes > MAX_TOTAL_BYTES) throw new Error('Le catalogue dépasse la limite logicielle de 850 MiB. Publiez moins de fiches ou réduisez la taille de certaines pages.');
       const extension = extensionForMime(info.mimeType);
       const path = `${snapshotId}/${safeFicheId}/page-${String(index + 1).padStart(4, '0')}.${extension}`;
       pages.push({ path, w: page.w, h: page.h, mimeType: info.mimeType, size: info.size });
@@ -596,9 +659,14 @@ export async function publishPublishedPrepFichesToCloud(
     onProgress?.('Publication du catalogue…');
     const result = await callPublisherApi<PrepFicheCloudPublishResult>({ action: 'publish', manifest });
     catalogueCommitted = true;
-    try { await markPrepFichesDistributed(published.map((fiche) => fiche.id), Date.now()); }
-    catch { /* la publication cloud est déjà validée; ce marqueur local est facultatif */ }
-    setLocalCatalogVersion(result.version);
+    try {
+      await markPrepFichesDistributed(
+        published.map((fiche) => fiche.id),
+        Date.now(),
+        Object.fromEntries(descriptors.map((fiche) => [fiche.id, fiche.pages.map((page) => page.path)])),
+      );
+    } catch { /* la publication cloud est déjà validée; ce marqueur local est facultatif */ }
+    setCachedPublishedPrepFicheCatalog(manifest);
     onProgress?.('Catalogue synchronisé.');
     return result;
   } catch (error) {

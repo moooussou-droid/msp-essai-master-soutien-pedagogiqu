@@ -109,6 +109,7 @@ import AIOnlineChatScreen from './components/AIOnlineChatScreen';
 import ClockAlarmScreen from './components/ClockAlarmScreen';
 import DisplaySettingsScreen from './components/SettingsScreen';
 import TeacherToolsScreen from './components/TeacherToolsScreen';
+import SpacedReviewScreen from './components/SpacedReviewScreen';
 import LibraryScreen from './components/LibraryScreen';
 import OralArtsScreen from './components/OralArtsScreen';
 import HomeClock from './components/HomeClock';
@@ -151,7 +152,6 @@ import { openWhatsApp } from './utils/contact';
 import { calculateBMI, bmiLabel } from './utils/health';
 import { checkCloudBackupAvailability } from './utils/storageStatus';
 import { getLastSync, getLastSyncInfo } from './utils/cloudSync';
-import { syncPublishedPrepFichesFromCloud } from './utils/prepFicheCloudSync';
 import { isActivated, getActivationChrono, readAndResizeImage, getProfile, schoolPlan } from './utils/userProfile';
 import { loadWorkspaces } from './utils/schoolSpace';
 
@@ -3710,7 +3710,7 @@ function TableViewScreen() {
 }
 
 // Main App Component
-function AppContent({ onActivated }: { onActivated?: () => void }) {
+function AppContent({ onActivated, trialMode = false }: { onActivated?: () => void; trialMode?: boolean }) {
   // RETOUR INTELLIGENT : on mémorise chaque page visitée pour que le bouton
   // « Retour » revienne à la page précédente et jamais de force à l'accueil.
   const location = useLocation();
@@ -3746,7 +3746,9 @@ function AppContent({ onActivated }: { onActivated?: () => void }) {
       <Route path="/publicites" element={<PublicitesScreen />} />
       <Route path="/boite-outils" element={<TeacherToolkitScreen />} />
       <Route path="/fiches-pedagogiques" element={<FichesPedagogiquesScreen />} />
-      <Route path="/fiches-preparation" element={<PrepFichesScreen />} />
+      {/* Révisions intelligentes : cartes numériques stockées sur l’appareil. */}
+      <Route path="/revisions-intelligentes" element={<SpacedReviewScreen />} />
+      <Route path="/fiches-preparation" element={<PrepFichesScreen trialMode={trialMode} />} />
       <Route path="/admin-fiches-preparation" element={<AdminPrepFichesScreen />} />
       <Route path="/correspondance" element={<CorrespondenceScreen />} />
       <Route path="/calendrier-scolaire" element={<SchoolCalendarScreen />} />
@@ -3847,27 +3849,32 @@ function AppContent({ onActivated }: { onActivated?: () => void }) {
 }
 
 function AppGate() {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [activated, setActivated] = useState(isActivated());
-  const [hash, setHash] = useState(window.location.hash || '#/');
   /*
-   * v55 — ESSAI GRATUIT DE 6 HEURES.
-   * Un prospect sans code peut utiliser l'application pendant 6 h. On
-   * reevalue l'etat chaque minute : l'essai doit se fermer de lui-meme,
-   * sans attendre que l'utilisateur recharge la page.
+   * L'essai est relu directement à chaque rendu (notamment à chaque
+   * navigation) : aucun ancien état de route ou de minuterie ne peut garder
+   * l'application ouverte après l'échéance.
    */
-  const [trial, setTrial] = useState(() => trialStatus());
-  // Réévalue les sessions locales aussi quand une session expire dans un autre onglet.
+  const [, setTrialTick] = useState(0);
+  const trial = trialStatus();
+  // Réévalue les accès locaux aussi à l'échéance, au retour de l'onglet et après un autre onglet.
   const [, setSessionTick] = useState(0);
 
   useEffect(() => {
-    const onHashChange = () => setHash(window.location.hash || '#/');
-    window.addEventListener('hashchange', onHashChange);
-    return () => window.removeEventListener('hashchange', onHashChange);
-  }, []);
-
-  useEffect(() => {
-    const id = window.setInterval(() => setTrial(trialStatus()), 60_000);
-    return () => window.clearInterval(id);
+    const refreshAccess = () => {
+      setTrialTick((tick) => tick + 1);
+      setActivated(isActivated());
+    };
+    const id = window.setInterval(refreshAccess, 60_000);
+    window.addEventListener('focus', refreshAccess);
+    window.addEventListener('storage', refreshAccess);
+    return () => {
+      window.clearInterval(id);
+      window.removeEventListener('focus', refreshAccess);
+      window.removeEventListener('storage', refreshAccess);
+    };
   }, []);
 
   useEffect(() => {
@@ -3875,7 +3882,7 @@ function AppGate() {
     return () => window.clearInterval(id);
   }, []);
 
-  const route = hash.replace(/^#/, '').split('?')[0] || '/';
+  const route = location.pathname.replace(/\/+$/, '') || '/';
   /*
    * v48 — L'ESPACE PARENTS EST PUBLIC.
    *
@@ -3889,27 +3896,30 @@ function AppGate() {
    * codes ('/suivi-enfant/codes') releve de l'enseignant et reste donc
    * derriere l'abonnement — elle est exclue plus bas.
    */
-  const publicRoutes = ['/activation', '/verify', '/admin-dashboard', '/equipe', '/suivi-enfant'];
+  const publicRoutes = ['/activation', '/verify', '/suivi-enfant'];
+  // L’écran exact de connexion admin reste accessible sans abonnement;
+  // aucun autre écran de l’espace admin ne l’est sans session valide.
+  const isAdminLoginRoute = route === '/admin-dashboard' || route === '/equipe';
   // Les outils de codes parents restent réservés aux enseignants abonnés.
   const isTeacherParentTool = route === '/suivi-enfant/codes' || route.startsWith('/suivi-enfant/codes/');
   const adminRoutes = ['/admin-dashboard', '/equipe', '/admin-cours', '/admin-fiches-preparation'];
   const isAdminRoute = adminRoutes.some((path) => route === path || route.startsWith(`${path}/`));
   const adminWorkspaceAllowed = isAdminRoute && isAnyAdminSession();
-  const isPublicRoute = (publicRoutes.some((path) => route === path || route.startsWith(`${path}/`)) && !isTeacherParentTool)
+  const isPublicRoute = isAdminLoginRoute
+    || (publicRoutes.some((path) => route === path || route.startsWith(`${path}/`)) && !isTeacherParentTool)
     || adminWorkspaceAllowed;
-  // L'essai en cours ouvre l'application au même titre qu'un abonnement.
+  // L'essai actif ouvre l'application; un abonnement expiré ne le fait plus.
   const onTrial = trial.active;
-  const canOpen = activated || onTrial || isPublicRoute;
-  const openHashRoute = (path: string) => {
-    window.location.hash = `#${path}`;
-    setHash(`#${path}`);
-  };
+  const activation = getActivationChrono();
+  const subscriptionActive = activated && activation.active && !activation.expired;
+  const canOpen = subscriptionActive || onTrial || isPublicRoute;
+  const openHashRoute = (path: string) => navigate(path);
 
   if (!canOpen) {
     return (
       <AccessGate
-        onActivated={() => setActivated(true)}
-        onTrialStarted={() => setTrial(trialStatus())}
+        onActivated={() => setActivated(isActivated())}
+        onTrialStarted={() => setTrialTick((tick) => tick + 1)}
         onOpenTeam={() => openHashRoute('/equipe')}
         onOpenPrincipal={() => openHashRoute('/admin-dashboard')}
       />
@@ -3924,7 +3934,7 @@ function AppGate() {
   // code École ; la bloquer empêcherait justement de s'abonner.
   const plan = getActivationChrono().plan;
   const onSchoolPage = isSchoolDiscoveryPath(route);
-  if (activated && plan === 'essentiel' && !isPublicRoute && !onSchoolPage && !isAllowedForEssentiel(route)) {
+  if (subscriptionActive && plan === 'essentiel' && !isPublicRoute && !onSchoolPage && !isAllowedForEssentiel(route)) {
     return <UpgradeScreen blockedPath={route} />;
   }
 
@@ -3934,7 +3944,7 @@ function AppGate() {
    * la version d'essai doit donner envie, pas tout offrir. Le prospect
    * decouvre ainsi l'existence de la formule Pro.
    */
-  if (!activated && onTrial && !isPublicRoute && isProPath(route)) {
+  if (!subscriptionActive && onTrial && !isPublicRoute && isProPath(route)) {
     return <UpgradeScreen blockedPath={route} targetPlan="pro" />;
   }
 
@@ -3948,7 +3958,7 @@ function AppGate() {
    * v64 : les formules ÉCOLE (6000/10000 F) incluent tout le Pro —
    * hasProPerimetre() les laisse donc passer au même titre.
    */
-  if (activated && !hasProPerimetre(plan) && !isPublicRoute && isProPath(route)) {
+  if (subscriptionActive && !hasProPerimetre(plan) && !isPublicRoute && isProPath(route)) {
     return <UpgradeScreen blockedPath={route} targetPlan="pro" />;
   }
 
@@ -3956,30 +3966,9 @@ function AppGate() {
     <>
       {onTrial && <TrialBanner status={trial} />}
       <SectionGuide />
-      <AppContent onActivated={() => setActivated(true)} />
+      <AppContent onActivated={() => setActivated(isActivated())} trialMode={!subscriptionActive && onTrial} />
     </>
   );
-}
-
-function PrepFicheCloudSyncBootstrap() {
-  useEffect(() => {
-    let active = true;
-    const run = () => {
-      if (!active || (typeof navigator !== 'undefined' && navigator.onLine === false)
-        || (typeof document !== 'undefined' && document.visibilityState === 'hidden')) return;
-      void syncPublishedPrepFichesFromCloud().catch(() => { /* l’écran des fiches affichera une erreur utile si nécessaire */ });
-    };
-    const startTimer = window.setTimeout(run, 1200);
-    window.addEventListener('online', run);
-    document.addEventListener('visibilitychange', run);
-    return () => {
-      active = false;
-      window.clearTimeout(startTimer);
-      window.removeEventListener('online', run);
-      document.removeEventListener('visibilitychange', run);
-    };
-  }, []);
-  return null;
 }
 
 export default function App() {
@@ -4004,7 +3993,6 @@ export default function App() {
 
   return (
     <HashRouter>
-      <PrepFicheCloudSyncBootstrap />
       {/* v47 : bandeau nominatif « LICENCE : <titulaire> » sur chaque page. */}
       <LicenceBanner />
       {/*

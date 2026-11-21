@@ -15,9 +15,10 @@
  *    de déverrouillage (même mécanisme que les autres contenus payants).
  *
  * Les pages restent stockées dans IndexedDB pour être disponibles hors ligne.
- * Les fiches publiées par l’administration se synchronisent automatiquement
- * depuis le catalogue cloud public; l’archive ZIP reste une solution de secours.
- * La personnalisation du filigrane reste dans le stockage local de l’appareil.
+ * Le catalogue public est récupéré à la demande; les pages d’une fiche ne sont
+ * téléchargées qu’au choix de l’utilisateur, puis restent dans IndexedDB.
+ * L’archive ZIP reste une solution de secours et la personnalisation du filigrane
+ * reste dans le stockage local de l’appareil.
  */
 
 import { openDB, DBSchema, IDBPDatabase } from 'idb';
@@ -55,6 +56,8 @@ export interface PrepFiche {
   distribution?: {
     publisherId: string;
     importedAt: number;
+    /** Chemins de la version cloud dont les pages sont présentes localement. */
+    cloudPaths?: string[];
   };
 }
 
@@ -191,8 +194,43 @@ export async function replaceCloudPublishedPrepFiches(fiches: PrepFiche[]): Prom
   }
 }
 
+/** Enregistre une seule fiche officielle après son téléchargement explicite par l’utilisateur. */
+export async function saveCloudPublishedPrepFiche(fiche: PrepFiche, cloudPaths: string[]): Promise<void> {
+  const db = await getDB();
+  const tx = db.transaction('fiches', 'readwrite');
+  const done = tx.done;
+  try {
+    const existing = await tx.store.get(fiche.id);
+    if (existing && !existing.published) {
+      throw new Error(`La fiche « ${existing.titre || existing.id} » entre en conflit avec un brouillon local. Renommez ce brouillon avant le téléchargement.`);
+    }
+    if (existing?.distribution?.publisherId && existing.distribution.publisherId !== PREP_FICHE_PUBLISHER_ID) {
+      throw new Error('Cette fiche est déjà attribuée à un autre paquet de transfert.');
+    }
+    await tx.store.put({
+      ...fiche,
+      published: true,
+      pageCount: fiche.pages.length,
+      distribution: {
+        publisherId: PREP_FICHE_PUBLISHER_ID,
+        importedAt: Date.now(),
+        cloudPaths: [...cloudPaths],
+      },
+    });
+    await done;
+  } catch (error) {
+    try { tx.abort(); } catch { /* transaction déjà annulée */ }
+    try { await done; } catch { /* rejets de transaction traités */ }
+    throw error;
+  }
+}
+
 /** Marque les fiches publiées localement après confirmation du catalogue serveur. */
-export async function markPrepFichesDistributed(ids: string[], importedAt = Date.now()): Promise<void> {
+export async function markPrepFichesDistributed(
+  ids: string[],
+  importedAt = Date.now(),
+  cloudPathsById?: Record<string, string[]>,
+): Promise<void> {
   if (ids.length === 0) return;
   const db = await getDB();
   const tx = db.transaction('fiches', 'readwrite');
@@ -201,9 +239,14 @@ export async function markPrepFichesDistributed(ids: string[], importedAt = Date
     for (const id of ids) {
       const fiche = await tx.store.get(id);
       if (!fiche || !fiche.published) continue;
+      const cloudPaths = cloudPathsById?.[id] ?? fiche.distribution?.cloudPaths;
       await tx.store.put({
         ...fiche,
-        distribution: { publisherId: PREP_FICHE_PUBLISHER_ID, importedAt },
+        distribution: {
+          publisherId: PREP_FICHE_PUBLISHER_ID,
+          importedAt,
+          ...(cloudPaths ? { cloudPaths: [...cloudPaths] } : {}),
+        },
       });
     }
     await done;

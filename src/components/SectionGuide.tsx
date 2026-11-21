@@ -15,14 +15,14 @@ const GUIDES: { match: (path: string) => boolean; content: GuideContent }[] = [
     match: path => path === '/fiches-preparation',
     content: {
       id: 'official-prep-fiches-cloud-v76',
-      title: 'Fiches officielles — synchronisation et hors-ligne',
-      intro: 'Les fiches publiées par l’administration se mettent à jour automatiquement sans synchroniser les listes d’élèves ni les autres ressources.',
+      title: 'Fiches officielles — catalogue à la demande et hors-ligne',
+      intro: 'Le catalogue et les pages sont récupérés uniquement lorsque vous le demandez; aucune vérification automatique n’est lancée.',
       steps: [
-        'Ouvrez ce module avec Internet pour récupérer le catalogue publié; les mises à jour sont aussi vérifiées au retour de la connexion et périodiquement.',
-        'Les nouvelles pages sont enregistrées dans le stockage local de l’appareil. Les fiches déjà récupérées restent accessibles sans réseau.',
+        'Appuyez sur « Charger le catalogue » pour obtenir la liste des fiches; cette action ne télécharge pas leurs pages.',
+        'Choisissez une fiche et appuyez sur « Enregistrer sur cet appareil » pour la rendre disponible hors ligne.',
         'Pour un appareil qui ne peut pas se connecter, l’administration peut fournir un ZIP de secours à importer dans ce module.',
       ],
-      tip: 'Sur un appareil neuf, une première connexion Internet ou l’import du ZIP est nécessaire avant la consultation hors ligne.',
+      tip: 'Un appareil neuf doit charger le catalogue puis enregistrer chaque fiche souhaitée avant sa consultation hors connexion.',
     },
   },
   {

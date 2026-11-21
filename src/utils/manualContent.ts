@@ -519,14 +519,14 @@ export const MANUAL: ManualChapter[] = [
       {
         titre: 'Fiches officielles de préparation — synchronisation cloud',
         chemin: 'Accueil → Fiches pédagogiques → Fiches de préparation Master Soutien Pédagogique',
-        role: 'Consulter les fiches publiées par l’administration et les garder disponibles hors connexion.',
+        role: 'Choisir les fiches publiées à enregistrer sur l’appareil pour une consultation hors connexion.',
         etapes: [
-          'Ouvrez le module avec Internet pour télécharger le catalogue publié.',
-          'Les nouveautés sont vérifiées à l’ouverture, au retour en ligne et périodiquement pendant que le module reste ouvert.',
-          'Après téléchargement, les fiches sont enregistrées sur l’appareil et restent consultables hors connexion.',
-          'Si l’appareil ne peut pas se connecter, importez le ZIP de secours fourni par l’administration.',
+          'Connectez-vous à Internet et appuyez sur « Charger le catalogue »; seule la liste des fiches est récupérée.',
+          'Choisissez une fiche, puis appuyez sur « Enregistrer sur cet appareil » pour télécharger ses pages.',
+          'Les pages enregistrées restent disponibles hors connexion; les autres fiches ne sont pas transférées.',
+          'Pour vérifier les nouveautés, actualisez le catalogue manuellement. Un ZIP de secours peut aussi être importé.',
         ],
-        attention: 'Cette synchronisation concerne uniquement les fiches pédagogiques publiées par l’administration. Elle ne synchronise pas les listes d’élèves, les notes, les brouillons ni les autres ressources.',
+        attention: 'Aucune vérification ni page de fiche n’est téléchargée automatiquement. Le catalogue concerne uniquement les fiches pédagogiques publiées et ne synchronise pas les listes d’élèves, les notes, les brouillons ou les autres ressources.',
       },
       {
         titre: 'Programme d’études',
@@ -841,23 +841,23 @@ export const MANUAL: ManualChapter[] = [
   {
     id: 'ch16',
     titre: '16. Poésies, chants, comptines et contes (v70)',
-    resume: 'Une médiathèque hors connexion pour préparer les activités orales, avec un répertoire élargi contextualisé au Bénin.',
+    resume: 'Une médiathèque d’activités orales, avec publications de l’administration accessibles à tous et téléchargement local pour les consulter hors connexion.',
     fiches: [
       {
         titre: 'Bibliothèque de poésie et de tradition orale',
         chemin: 'Accueil → Poésies, chants, comptines et contes → Bibliothèque de poésie et de tradition orale',
-        role: 'Trouver, lire, écouter et enrichir des ressources orales adaptées à la classe.',
+        role: 'Trouver, lire, écouter et préparer des ressources orales adaptées à la classe.',
         etapes: [
-          'Filtrez les 33 ressources intégrées par type (poésie, chant, comptine, conte), niveau, thème ou mot du texte.',
-          'Le principal et tous les membres d’équipe peuvent ajouter une ressource texte, audio, vidéo ou combinée; l’auteur/contributeur est prérempli à partir de la session locale.',
-          'Ouvrez une ressource pour afficher le texte et son objectif pédagogique; les ressources média seules peuvent être créées sans paroles.',
-          'La voix de synthèse lit un texte en français si une voix locale hors ligne est installée sur l’appareil ; elle ne chante pas.',
-          'Les audios et vidéos sont conservés dans IndexedDB sur cet appareil et restent lisibles hors connexion. La limite est de 50 Mo par fichier.',
-          'Pour copier les textes et leurs fichiers audio/vidéo entre téléphone et PC sans cloud, exportez le ZIP de transfert, déplacez-le par câble USB ou Bluetooth, puis choisissez « Importer et fusionner » sur l’autre appareil. Les ressources présentes sont conservées.',
-          'Certains chants sont des adaptations originales MSP et non les paroles d’un enregistrement existant; vérifiez les variantes locales et les droits de partage.'
+          'Filtrez les ressources intégrées et publiées par type (poésie, chant, comptine, conte), niveau, thème ou mot du texte.',
+          'Les administrateurs habilités publient les contenus destinés à tous les utilisateurs en MP3, MP4, TXT, DOC/DOCX ou PDF. Le titre, le niveau, la langue, le thème et l’auteur sont affichés dans le catalogue partagé.',
+          'Le catalogue public s’actualise à l’ouverture de la bibliothèque et au retour de la connexion Internet. Les ajouts personnels faits dans l’autre section restent locaux et ne sont pas envoyés au cloud.',
+          'Ouvrez un fichier pour écouter le MP3, lire le MP4, afficher le TXT/PDF ou télécharger le DOC/DOCX avec une application compatible.',
+          'Choisissez « Télécharger hors ligne » pour conserver une copie sur cet appareil. Les copies hors connexion occupent l’espace du navigateur; retirez-les avec « Retirer la copie » si nécessaire.',
+          'Les ajouts personnels et leurs fichiers média restent locaux. Pour les transférer manuellement entre téléphone et PC, exportez le ZIP de transfert, déplacez-le par câble USB ou Bluetooth, puis choisissez « Importer et fusionner » sur l’autre appareil.',
+          'La publication cloud exige le déploiement Vercel avec l’API et la migration Supabase dédiée. Taille maximale : 45 Mo par fichier. Utilisez uniquement des contenus dont MSP possède ou a obtenu les droits de partage.'
         ],
-        sorties: 'Lecture vocale · audio et vidéo locaux · textes personnalisés',
-        attention: 'Les ajouts et les transferts fonctionnent hors ligne, mais aucune synchronisation automatique n’est faite. Le ZIP oral inclut les textes et médias; la sauvegarde générale inclut les textes personnalisés mais pas les fichiers. Les codes d’abonnement et les codes équipe ne font pas partie du ZIP oral.'
+        sorties: 'Catalogue MSP publié · lecture audio/vidéo · affichage TXT/PDF · copies locales hors connexion',
+        attention: 'Les publications sont visibles à tous les utilisateurs et accessibles en ligne; pour l’usage hors connexion, chaque appareil doit télécharger le fichier. La bibliothèque publiée utilise uniquement la table et le bucket dédiés aux arts oraux. Elle n’envoie ni autres ressources, ni listes d’élèves. Le ZIP oral ne contient que les ajouts personnels locaux; les codes d’abonnement et les codes équipe n’en font pas partie.'
       },
     ],
   },

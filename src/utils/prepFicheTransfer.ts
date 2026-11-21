@@ -181,7 +181,7 @@ export async function exportPublishedPrepFichesArchive(): Promise<PrepFicheExpor
   zip.file('manifest.json', JSON.stringify(manifest));
   zip.file('LISEZ-MOI.txt',
     'Paquet ZIP de secours pour les fiches publiées par Master Soutien Pédagogique.\n'
-    + 'La synchronisation cloud automatique est prioritaire lorsque l’application peut accéder à Internet.\n'
+    + 'Le catalogue cloud se charge manuellement; choisissez les fiches à enregistrer hors connexion.\n'
     + 'Pour un transfert hors ligne, ouvrez « Fiches de préparation Master Soutien Pédagogique » puis « Importer le paquet reçu ».\n'
     + 'Ce paquet contient uniquement les fiches publiées et leurs pages; aucune donnée d’élève ni aucun code d’accès n’est inclus.\n'
     + 'Après une mise à jour ou un retrait de fiche, créez et distribuez un nouveau paquet de secours.');

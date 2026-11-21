@@ -174,7 +174,9 @@ test('seul le rôle principal peut obtenir des dépôts signés et publier le ma
     assert.equal(invalid.json().error, 'PREP_FICHES_MANIFEST_INVALID');
 
     const createSizedManifest = (sizedSnapshotId, totalBytes) => {
-      const pageSizes = Array.from({ length: 12 }, (_, index) => index < 11 ? 45_000_000 : totalBytes - 11 * 45_000_000);
+      const pageCount = Math.ceil(totalBytes / 45_000_000);
+      const pageSizes = Array.from({ length: pageCount }, (_, index) =>
+        Math.min(45_000_000, totalBytes - index * 45_000_000));
       return {
         ...manifest,
         snapshotId: sizedSnapshotId,
@@ -190,17 +192,17 @@ test('seul le rôle principal peut obtenir des dépôts signés et publier le ma
         }],
       };
     };
-    const maxCatalogBytes = 500 * 1024 * 1024;
+    const maxCatalogBytes = 850 * 1024 * 1024;
     const atLimit = responseMock();
     await handlePrepFicheSync(request(principalCookie, {
-      action: 'publish', manifest: createSizedManifest('snapshot_at_500mib', maxCatalogBytes),
+      action: 'publish', manifest: createSizedManifest('snapshot_at_850mib', maxCatalogBytes),
     }), atLimit);
-    assert.equal(atLimit.statusCode, 200, 'un catalogue de 500 MiB est accepté');
+    assert.equal(atLimit.statusCode, 200, 'un catalogue de 850 MiB est accepté');
 
     const callsBeforeOverLimit = catalogCalls.length;
     const overLimit = responseMock();
     await handlePrepFicheSync(request(principalCookie, {
-      action: 'publish', manifest: createSizedManifest('snapshot_over_500mib', maxCatalogBytes + 1),
+      action: 'publish', manifest: createSizedManifest('snapshot_over_850mib', maxCatalogBytes + 1),
     }), overLimit);
     assert.equal(overLimit.statusCode, 413);
     assert.equal(overLimit.json().error, 'PREP_FICHES_TOO_LARGE');
@@ -265,7 +267,7 @@ test('le remplacement cloud est atomique et ne touche ni aux fiches locales ni a
   }
 });
 
-test('le client récupère automatiquement une nouvelle version, la garde en cache puis évite les téléchargements répétés', async () => {
+test('le catalogue cloud se synchronise sans pages; une fiche sélectionnée se télécharge une fois et reste hors ligne', async () => {
   const tempDir = mkdtempSync(join(process.cwd(), '.tmp-prep-fiche-cloud-client-'));
   const dom = new JSDOM('', { url: 'https://msp.example' });
   const globalNames = ['window', 'document', 'localStorage', 'FileReader', 'fetch'];
@@ -300,7 +302,7 @@ test('le client récupère automatiquement une nouvelle version, la garde en cac
     const requireFromBundle = createRequire(join(tempDir, 'prepFicheCloudSync.js'));
     const cloudSync = requireFromBundle('./prepFicheCloudSync.js');
     const prepFiches = requireFromBundle('./prepFiches.js');
-    assert.equal(cloudSync.PREP_FICHE_CLOUD_LIMITS.totalBytes, 500 * 1024 * 1024, 'le client applique la même limite de 500 MiB que le serveur');
+    assert.equal(cloudSync.PREP_FICHE_CLOUD_LIMITS.totalBytes, 850 * 1024 * 1024, 'le client applique la même limite logicielle de 850 MiB que le serveur');
 
     const bytesV1 = Buffer.from([1, 2, 3, 4]);
     const bytesV2 = Buffer.from([5, 6, 7, 8]);
@@ -332,22 +334,34 @@ test('le client récupère automatiquement une nouvelle version, la garde en cac
       throw new Error(`Unexpected client-sync request: ${url}`);
     };
 
-    const first = await cloudSync.syncPublishedPrepFichesFromCloud();
+    const first = await cloudSync.syncPublishedPrepFicheCatalogFromCloud();
     assert.equal(first.updated, true);
     assert.equal(first.fiches, 1);
+    assert.equal(first.pages, 1);
+    assert.equal(storageDownloads, 0, 'charger le manifeste ne doit jamais télécharger de pages');
+    assert.equal(first.catalog.fiches[0].titre, 'Version 1');
+    assert.ok(cloudSync.loadCachedPublishedPrepFicheCatalog(), 'le manifeste est conservé sur cet appareil');
+
+    const downloaded = await cloudSync.downloadPublishedPrepFicheFromCloud('remote-1');
+    assert.equal(downloaded.titre, 'Version 1');
     assert.equal(storageDownloads, 1);
     let cached = await prepFiches.getPublishedPrepFiches();
     assert.equal(cached.find((fiche) => fiche.id === 'remote-1').titre, 'Version 1');
+    assert.equal(cached.find((fiche) => fiche.id === 'remote-1').distribution.cloudPaths[0], 'snapshot_12345678/remote-1/page-0001.jpg');
 
-    const unchanged = await cloudSync.syncPublishedPrepFichesFromCloud();
+    await cloudSync.downloadPublishedPrepFicheFromCloud('remote-1');
+    assert.equal(storageDownloads, 1, 'une fiche déjà à jour dans IndexedDB ne redéclenche pas son téléchargement');
+    const unchanged = await cloudSync.syncPublishedPrepFicheCatalogFromCloud();
     assert.equal(unchanged.updated, false);
-    assert.equal(storageDownloads, 1, 'une version déjà présente dans IndexedDB ne redéclenche pas le téléchargement des pages');
+    assert.equal(storageDownloads, 1, 'la vérification du catalogue ne télécharge toujours aucune page');
 
     activeBytes = bytesV2;
     catalogRow = { version: 'snapshot_87654321', manifest: makeManifest('snapshot_87654321', 'Version 2') };
-    const update = await cloudSync.syncPublishedPrepFichesFromCloud();
+    const update = await cloudSync.syncPublishedPrepFicheCatalogFromCloud();
     assert.equal(update.updated, true);
-    assert.equal(storageDownloads, 2);
+    assert.equal(storageDownloads, 1, 'la nouvelle version du catalogue seule ne transfère pas la nouvelle image');
+    await cloudSync.downloadPublishedPrepFicheFromCloud('remote-1');
+    assert.equal(storageDownloads, 2, 'la page ne se télécharge qu’après le choix explicite de la fiche');
     cached = await prepFiches.getPublishedPrepFiches();
     assert.equal(cached.filter((fiche) => fiche.id === 'remote-1').length, 1);
     assert.equal(cached.find((fiche) => fiche.id === 'remote-1').titre, 'Version 2');

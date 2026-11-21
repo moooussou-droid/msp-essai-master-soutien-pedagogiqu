@@ -1,0 +1,11 @@
+src/App.tsx
+src/components/AdminPrepFichesScreen.tsx
+src/components/PrepFichesScreen.tsx
+src/components/PublishedOralResourcesPanel.tsx
+src/components/SectionGuide.tsx
+src/utils/manualContent.ts
+src/utils/prepFicheCloudSync.ts
+src/utils/prepFicheTransfer.ts
+src/utils/prepFiches.ts
+tests/prepFicheCloudSync.test.mjs
+scripts/postbuild.mjs

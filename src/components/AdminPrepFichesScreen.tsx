@@ -242,18 +242,18 @@ export default function AdminPrepFichesScreen() {
           <button onClick={() => goBack()} className="p-2 bg-white/10 rounded-lg"><ChevronLeft className="w-6 h-6" /></button>
           <div className="flex-1">
             <h1 className="font-bold text-lg">Fiches de préparation par classe</h1>
-            <p className="text-slate-300 text-sm">Publication cloud automatique • fiches conservées hors ligne</p>
+            <p className="text-slate-300 text-sm">Publication cloud des fiches • téléchargement sélectif sur les appareils</p>
           </div>
         </div>
       </header>
 
       <main className="p-4 pb-24 max-w-4xl mx-auto space-y-5">
         <section className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4">
-          <h2 className="font-bold text-emerald-950 flex items-center gap-2"><CloudUpload className="w-5 h-5" /> Synchronisation automatique des fiches publiées</h2>
+          <h2 className="font-bold text-emerald-950 flex items-center gap-2"><CloudUpload className="w-5 h-5" /> Publication cloud des fiches</h2>
           <p className="text-emerald-900 text-sm mt-1 leading-relaxed">
             Seules les fiches marquées « publiées » sont envoyées. Après une publication, un retrait ou une suppression,
-            le catalogue cloud est mis à jour automatiquement si la session IA principale est active. Les appareils des
-            utilisateurs récupèrent les nouveautés lorsqu’ils sont en ligne et gardent les pages en cache hors connexion.
+            le catalogue cloud est mis à jour depuis cette interface si la session IA principale est active. Côté utilisateurs,
+            le catalogue doit être chargé manuellement et chaque fiche est téléchargée sur demande pour rester disponible hors ligne.
             Les brouillons, les listes d’élèves et les autres données ne sont pas synchronisés par ce mécanisme.
           </p>
           {publisherSession?.role === 'principal' ? (
@@ -297,7 +297,7 @@ export default function AdminPrepFichesScreen() {
             </form>
           )}
           <p className="mt-2 text-xs text-emerald-900">
-            Connexion requise au déploiement Vercel avec API. Chaque page doit faire moins de 45 Mo; le catalogue cloud complet est limité à 500 MiB.
+            Connexion requise au déploiement Vercel avec API. Chaque page doit faire moins de 45 Mo; le catalogue cloud complet a une limite logicielle de 850 MiB.
             Les pages de plus de 6 MiB utilisent un envoi reprenable. Le ZIP statique peut télécharger les fiches et servir de secours, mais ne peut pas publier.
           </p>
           {cloudProgress && cloudBusy && <p role="status" className="mt-2 text-sm font-medium text-emerald-900">{cloudProgress}</p>}
@@ -332,8 +332,8 @@ export default function AdminPrepFichesScreen() {
             Classez la fiche par <strong>classe</strong> et par <strong>matière / discipline</strong>, puis ajoutez ses
             pages (images ou PDF). La publication l’enregistre sur cet appareil et ajoute le filigrane
             <strong> « Master Soutien Pédagogique »</strong>. Les fiches publiées sont synchronisées sur le catalogue cloud
-            lorsque la session principale est active; le ZIP ci-dessous reste disponible en secours hors ligne.
-            La personnalisation du filigrane coûtera à l'utilisateur <strong> {PRICE_PER_PAGE} F par page</strong>.
+            lorsque la session principale est active. Les utilisateurs chargent la liste manuellement et choisissent les pages à conserver hors ligne;
+            le ZIP ci-dessous reste disponible en secours. La personnalisation du filigrane coûtera à l'utilisateur <strong> {PRICE_PER_PAGE} F par page</strong>.
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
