@@ -90,6 +90,6 @@ test('le portail délègue le contrôle des routes à la politique d’accès ex
   assert.ok(app.includes('const bypassesPlanGates = isPublicRoute || isAdminLoginRoute;'));
   assert.ok(app.includes('onTrialStarted={() => setTrialTick((tick) => tick + 1)}'));
   assert.ok(admin.includes('data-testid="btn-retour-activation"')
-    && admin.includes('getHomeReturnPath(isActivated())'),
-    'sans activation valide, le bouton admin revient à l’écran d’activation plutôt qu’au menu');
+    && admin.includes("navigate('/activation')"),
+    'le bouton admin revient systématiquement à l’écran d’activation plutôt qu’au menu');
 });

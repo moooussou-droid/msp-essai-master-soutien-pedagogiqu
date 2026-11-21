@@ -59,9 +59,10 @@ test('les boutons de retour sans code actif mènent à l’activation, pas au me
     readFile(new URL('../src/components/AdminDashboardScreen.tsx', import.meta.url), 'utf8'),
     readFile(new URL('../src/components/UpgradeScreen.tsx', import.meta.url), 'utf8'),
   ]);
-  assert.match(admin, /getHomeReturnPath\(isActivated\(\)\)/);
-  assert.match(admin, /data-testid="btn-retour-activation"[\s\S]*?navigate\(returnHomePath\)/);
+  assert.match(admin, /data-testid="btn-retour-activation"[\s\S]*?navigate\('\/activation'\)/);
   assert.match(admin, /Retour à l’écran d’activation/);
+  assert.doesNotMatch(admin, /Retour à l’accueil/,
+    'le formulaire admin ne doit pas proposer le retour au menu sans code');
   assert.match(upgrade, /getHomeReturnPath\(chrono\.active && !chrono\.expired\)/);
   assert.match(upgrade, /navigate\(returnHomePath\)[\s\S]*?data-testid="btn-retour-accueil-upgrade"/);
   assert.match(upgrade, /Retour à l’écran d’activation/);

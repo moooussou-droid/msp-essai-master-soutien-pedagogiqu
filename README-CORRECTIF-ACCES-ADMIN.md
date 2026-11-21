@@ -1,21 +1,23 @@
 # Correctif — retour depuis la connexion d’administration
 
-Ce paquet corrige les boutons de retour liés à l’accès : lorsqu’aucune activation valide n’est enregistrée, ils ouvrent l’écran d’activation au lieu du menu de l’application. Avec une activation valide, le retour à l’accueil habituel reste disponible.
+Ce paquet corrige les boutons de retour liés à l’accès : depuis les écrans de connexion admin, le bouton mène toujours à l’écran d’activation. Depuis l’écran de mise à niveau, il mène à l’activation sans abonnement valide et à l’accueil avec une activation valide.
 
 ## Fichiers à copier à la racine du projet
 
 Remplacez ou ajoutez les fichiers en conservant ces chemins :
 
 - `src/App.tsx` — branche le portail global sur la décision d’accès par route ;
-- `src/components/AdminDashboardScreen.tsx` — le bouton du formulaire admin choisit l’activation ou l’accueil selon l’existence d’une activation valide ;
-- `src/components/UpgradeScreen.tsx` — même règle pour le bouton de retour depuis l’écran de mise à niveau ;
+- `src/components/AdminDashboardScreen.tsx` — depuis les connexions principale et équipe, le bouton mène toujours à l’écran d’activation, sans dépendre du stockage local du navigateur ;
+- `src/components/UpgradeScreen.tsx` — le bouton de retour mène à l’activation sans abonnement valide et à l’accueil avec une activation valide ;
 - `src/utils/routeAccess.ts` — règle de décision d’accès et destination de retour partagée ;
 - `tests/trial.test.mjs` — contrôle l’intégration au garde global ;
 - `tests/appAccess.test.mjs` — tests du parcours et des exceptions d’accès.
 
 ## Comportement conservé
 
-- L’essai gratuit intentionnel de 2 heures reste disponible ; cette exception est distincte des boutons de retour, qui dirigent vers l’activation tant qu’aucun abonnement valide n’est enregistré.
+- L’essai gratuit intentionnel de 2 heures reste disponible et reste une autorisation distincte du bouton de retour.
+- Depuis les connexions principale et équipe, le bouton mène toujours à l’activation, sans renvoyer au menu.
+- Depuis l’écran de mise à niveau, aucun abonnement valide signifie retour à l’activation ; une activation valide conserve le retour à l’accueil.
 - Les connexions principale et équipe restent accessibles pour permettre la saisie de leurs identifiants.
 - Les routes publiques prévues (activation, vérification et suivi d’enfant) restent publiques.
 - Sans abonnement valide, essai actif, route publique ou session d’administration valide, le garde global affiche l’écran d’accès au lieu de l’application.
