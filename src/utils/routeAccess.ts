@@ -38,6 +38,15 @@ export interface RouteAccessDecision {
 }
 
 /**
+ * Destination des boutons « Retour à l'accueil » liés à l'accès : si aucun
+ * abonnement activé n'est valable, envoyer vers l'activation plutôt que le
+ * menu (un essai peut rester actif sans être une activation payante).
+ */
+export function getHomeReturnPath(hasActiveActivation: boolean): '/' | '/activation' {
+  return hasActiveActivation ? '/' : '/activation';
+}
+
+/**
  * Évalue la route courante sans donner aux écrans de connexion admin un accès
  * public global à l'application.
  */

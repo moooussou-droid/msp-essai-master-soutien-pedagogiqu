@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useSmartBack } from '../utils/useSmartBack';
 import { PLANS, PRO_MODULES, SubscriptionPlan } from '../utils/subscription';
 import { getActivationChrono } from '../utils/userProfile';
+import { getHomeReturnPath } from '../utils/routeAccess';
 import { openWhatsApp } from '../utils/contact';
 
 /**
@@ -48,6 +49,7 @@ export default function UpgradeScreen({
   }
 
   const isPro = targetPlan === 'pro';
+  const returnHomePath = getHomeReturnPath(chrono.active && !chrono.expired);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -123,10 +125,11 @@ export default function UpgradeScreen({
             Voir toutes les formules / renouveler
           </button>
           <button
-            onClick={() => navigate('/')}
+            onClick={() => navigate(returnHomePath)}
+            data-testid="btn-retour-accueil-upgrade"
             className="mt-2 w-full bg-gray-100 text-gray-700 py-3 rounded-xl font-semibold"
           >
-            Retour à l'accueil
+            {returnHomePath === '/' ? 'Retour à l’accueil' : 'Retour à l’écran d’activation'}
           </button>
         </div>
       </main>

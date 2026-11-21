@@ -7,6 +7,8 @@ import {
   Trash2, Users, Settings, FileText, Activity, Copy, RefreshCw, Wrench, Lock, Wallet, Database, Building2,
 } from 'lucide-react';
 import { ADMIN_PASSWORD } from '../utils/adminConfig';
+import { isActivated } from '../utils/userProfile';
+import { getHomeReturnPath } from '../utils/routeAccess';
 import { backupCredentials, deleteCode, isRevoked, purgeTechnical, restoreCode, revokeCode } from '../utils/credentialsVault';
 import { generateSimpleCodes, formatSimpleCode, cleanSimpleCode, isAccessCode, codePrefixOfPlan, type SubscriptionPlan, daysRemaining, formatDateFr, expiresAtFrom } from '../utils/simpleCode';
 import { PLANS } from '../utils/subscription';
@@ -234,6 +236,7 @@ function readTechInfo() {
 export default function AdminDashboardScreen({ loginMode = 'team' }: { loginMode?: 'owner' | 'team' }) {
   const navigate = useNavigate();
   const goBack = useSmartBack('/');
+  const returnHomePath = getHomeReturnPath(isActivated());
   const getSessionForMode = () => {
     const raw = getAdminSession();
     if (loginMode === 'owner') return raw === 'owner' ? 'owner' : '';
@@ -695,10 +698,10 @@ export default function AdminDashboardScreen({ loginMode = 'team' }: { loginMode
           <button
             type="button"
             data-testid="btn-retour-activation"
-            onClick={() => navigate('/activation')}
+            onClick={() => navigate(returnHomePath)}
             className="mt-3 w-full py-2 text-sm font-semibold text-slate-500"
           >
-            Retour à l’écran d’activation
+            {returnHomePath === '/' ? 'Retour à l’accueil' : 'Retour à l’écran d’activation'}
           </button>
           <div className="mt-3 flex justify-center gap-4 text-xs">
             <button onClick={() => navigate(ownerMode ? '/equipe' : '/admin-dashboard')} className="text-emerald-800 underline underline-offset-4">

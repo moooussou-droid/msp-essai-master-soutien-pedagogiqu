@@ -6,7 +6,7 @@ import { transform } from 'esbuild';
 const source = await readFile(new URL('../src/utils/routeAccess.ts', import.meta.url), 'utf8');
 const { code } = await transform(source, { loader: 'ts', format: 'esm', target: 'node20' });
 const routeAccessUrl = `data:text/javascript;base64,${Buffer.from(code).toString('base64')}`;
-const { resolveRouteAccess } = await import(routeAccessUrl);
+const { resolveRouteAccess, getHomeReturnPath } = await import(routeAccessUrl);
 
 const guest = {
   subscriptionActive: false,
@@ -51,11 +51,20 @@ test('une activation valide et une session admin valide conservent leurs accès 
   assert.equal(resolveRouteAccess('/admin-fiches-preparation', { ...guest, hasAdminSession: true }).adminWorkspaceAllowed, true);
 });
 
-test('le bouton montré sur l’écran d’administration va à l’activation, pas à l’accueil', async () => {
-  const admin = await readFile(new URL('../src/components/AdminDashboardScreen.tsx', import.meta.url), 'utf8');
-  assert.match(admin, /data-testid="btn-retour-activation"[\s\S]*?navigate\('\/activation'\)/);
+test('les boutons de retour sans code actif mènent à l’activation, pas au menu', async () => {
+  assert.equal(getHomeReturnPath(false), '/activation');
+  assert.equal(getHomeReturnPath(true), '/', 'un abonnement actif conserve le retour à l’accueil');
+
+  const [admin, upgrade] = await Promise.all([
+    readFile(new URL('../src/components/AdminDashboardScreen.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../src/components/UpgradeScreen.tsx', import.meta.url), 'utf8'),
+  ]);
+  assert.match(admin, /getHomeReturnPath\(isActivated\(\)\)/);
+  assert.match(admin, /data-testid="btn-retour-activation"[\s\S]*?navigate\(returnHomePath\)/);
   assert.match(admin, /Retour à l’écran d’activation/);
-  assert.doesNotMatch(admin, /navigate\('\/'\)[^\n]*Retour à l’accueil/);
+  assert.match(upgrade, /getHomeReturnPath\(chrono\.active && !chrono\.expired\)/);
+  assert.match(upgrade, /navigate\(returnHomePath\)[\s\S]*?data-testid="btn-retour-accueil-upgrade"/);
+  assert.match(upgrade, /Retour à l’écran d’activation/);
 });
 
 test('le portail global utilise la décision de route et ne confond pas essai, connexion admin et abonnement', async () => {
