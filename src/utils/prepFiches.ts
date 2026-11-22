@@ -10,7 +10,7 @@
  *    « Master Soutien Pédagogique » (téléchargement gratuit).
  *  - L'utilisateur peut PERSONNALISER le filigrane (mettre son nom / son école)
  *    à la place de « Master Soutien Pédagogique ». Cette personnalisation lui
- *    coûte 5 F PAR PAGE de la fiche.
+ *    coûte 3 F PAR PAGE de la fiche.
  *  - Le paiement se règle auprès du Super Administrateur, qui délivre un code
  *    de déverrouillage (même mécanisme que les autres contenus payants).
  *
@@ -24,8 +24,8 @@
 import { openDB, DBSchema, IDBPDatabase } from 'idb';
 import jsPDF from 'jspdf';
 
-/** Prix de la personnalisation du filigrane : 5 F par page. */
-export const PRICE_PER_PAGE = 5;
+/** Prix de la personnalisation du filigrane : 3 F par page. */
+export const PRICE_PER_PAGE = 3;
 
 /** Filigrane par défaut, imposé dès la mise en ligne. */
 export const DEFAULT_WATERMARK = 'Master Soutien Pédagogique';
@@ -94,7 +94,7 @@ export function ficheContentId(id: string): string {
   return `fiche:${id}`;
 }
 
-/** Prix total de la personnalisation d'une fiche (5 F × nombre de pages). */
+/** Prix total de la personnalisation d'une fiche (3 F × nombre de pages). */
 export function personalizationPrice(fiche: Pick<PrepFiche, 'pageCount'>): number {
   return Math.max(1, fiche.pageCount) * PRICE_PER_PAGE;
 }

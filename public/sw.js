@@ -4,7 +4,7 @@
 //   → À chaque redéploiement, les utilisateurs reçoivent la NOUVELLE version
 //     (et non plus l'ancienne indéfiniment, comme avec un cache-first).
 // - Ressources statiques (icônes, manifest) : cache d'abord, réseau en secours.
-const CACHE_NAME = 'master-soutien-v74-local-llm';
+const CACHE_NAME = 'master-soutien-v75-fiches-850-3f';
 
 const ASSETS = [
   './',

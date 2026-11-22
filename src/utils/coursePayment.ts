@@ -16,7 +16,7 @@
  */
 
 /** v41 : les images de la banque éducative sont aussi des contenus payants. */
-/** v61 : la personnalisation du filigrane des fiches de préparation est payante (5 F / page). */
+/** v61 : la personnalisation du filigrane des fiches de préparation est payante (3 F / page). */
 /** v61 : le téléchargement PDF d'un bulletin est payant (15 F par bulletin). */
 /** v62 : une formation MOOC peut être payante (ou partiellement payante). */
 export type PaidContentKind = 'cours' | 'livre' | 'image' | 'signature' | 'fiche' | 'bulletin' | 'formation';
@@ -249,7 +249,7 @@ export function paymentMessage(title: string, price: string, kind: PaidContentKi
   }
   if (kind === 'fiche') {
     return `Pour personnaliser le filigrane de la fiche de préparation « ${title} » `
-      + `(5 F par page), vous devez régler ${price} FCFA auprès du Super Administrateur. `
+      + `(3 F par page), vous devez régler ${price} FCFA auprès du Super Administrateur. `
       + `Après paiement, il vous transmettra un code de déverrouillage qui vous permettra de `
       + `remplacer le filigrane « Master Soutien Pédagogique » par le vôtre, puis de télécharger la fiche.`;
   }
@@ -279,7 +279,7 @@ export function whatsappLink(contact: PaymentContact, title: string, price: stri
   }
   if (kind === 'fiche') {
     const t = `Bonjour, je souhaite payer ${price} FCFA pour personnaliser le filigrane de la `
-      + `fiche de préparation « ${title} » (5 F / page) sur Master Soutien Pédagogique. `
+      + `fiche de préparation « ${title} » (3 F / page) sur Master Soutien Pédagogique. `
       + `Mon identifiant est ${getDeviceId()}.`;
     return `https://wa.me/${num}?text=${encodeURIComponent(t)}`;
   }

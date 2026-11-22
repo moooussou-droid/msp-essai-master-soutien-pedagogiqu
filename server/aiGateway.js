@@ -17,10 +17,6 @@ const PROVIDER_DEFINITIONS = {
     label: 'Anthropic / Claude', key: 'ANTHROPIC_API_KEY', model: 'ANTHROPIC_MODEL', models: 'ANTHROPIC_MODELS', defaultModel: '',
     vision: true, webSearch: false,
   },
-  mistral: {
-    label: 'Mistral AI', key: 'MISTRAL_API_KEY', model: 'MISTRAL_MODEL', models: 'MISTRAL_MODELS', defaultModel: '',
-    vision: false, webSearch: false,
-  },
   perplexity: {
     label: 'Perplexity', key: 'PERPLEXITY_API_KEY', model: 'PERPLEXITY_MODEL', models: 'PERPLEXITY_MODELS', defaultModel: '',
     vision: false, webSearch: true,
@@ -454,11 +450,10 @@ async function callProvider(provider, config, model, messages, image) {
   let response;
   let data;
 
-  if (provider === 'openai' || provider === 'mistral' || provider === 'deepseek' || provider === 'perplexity') {
+  if (provider === 'openai' || provider === 'deepseek' || provider === 'perplexity') {
     const base = provider === 'openai' ? 'https://api.openai.com/v1/chat/completions'
-      : provider === 'mistral' ? 'https://api.mistral.ai/v1/chat/completions'
-        : provider === 'deepseek' ? 'https://api.deepseek.com/chat/completions'
-          : 'https://api.perplexity.ai/chat/completions';
+      : provider === 'deepseek' ? 'https://api.deepseek.com/chat/completions'
+        : 'https://api.perplexity.ai/chat/completions';
     const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${config.apiKey}` };
     response = await upstreamFetch(base, {
       method: 'POST', headers,
@@ -583,7 +578,7 @@ export async function handleAIChat(req, res) {
 
 const PREP_FICHE_STORAGE_BUCKET = 'msp-prep-fiches';
 const PREP_FICHE_PAGE_MAX_BYTES = 45_000_000;
-const PREP_FICHE_TOTAL_MAX_BYTES = 500 * 1024 * 1024;
+const PREP_FICHE_TOTAL_MAX_BYTES = 850 * 1024 * 1024;
 const PREP_FICHE_MAX_PAGES = 10_000;
 const PREP_FICHE_ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/bmp', 'image/avif']);
 
@@ -636,7 +631,7 @@ function validatePrepFicheCloudManifest(value) {
       totalPages++;
       totalBytes += page.size;
       if (totalPages > PREP_FICHE_MAX_PAGES || totalBytes > PREP_FICHE_TOTAL_MAX_BYTES) {
-        throw httpError(413, 'PREP_FICHES_TOO_LARGE', 'Le catalogue dépasse la limite de 500 MiB ou contient trop de pages.');
+        throw httpError(413, 'PREP_FICHES_TOO_LARGE', 'Le catalogue dépasse la limite logicielle de 850 MiB ou contient trop de pages.');
       }
     }
   }
