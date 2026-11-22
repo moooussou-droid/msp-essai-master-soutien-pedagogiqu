@@ -1,5 +1,6 @@
 import ExcelJS from 'exceljs';
 import { EXCEL_TEXT_FORMAT, formatDateDMY } from './excelDate';
+import { sortEnrollmentRecords } from './enrollmentSort';
 
 export interface EnrollmentRecord {
   id: string;
@@ -76,7 +77,7 @@ export async function generateEnrollmentExcel(records: EnrollmentRecord[], extra
   for (const level of ENROLLMENT_LEVELS) {
     const sheet = workbook.addWorksheet(level);
     sheet.addRow(headers);
-    const levelRecords = records.filter(r => r.classLevel === level);
+    const levelRecords = sortEnrollmentRecords(records.filter(r => r.classLevel === level));
     for (const record of levelRecords) {
       sheet.addRow([
         record.nom.toUpperCase(),

@@ -14,6 +14,7 @@ import {
 } from '../utils/enrollment';
 import { downloadExcel } from '../utils/excelGenerator';
 import { hasAdminRole } from '../utils/adminSession';
+import { sortEnrollmentRecords } from '../utils/enrollmentSort';
 
 function emptyRecord(): EnrollmentRecord {
   return {
@@ -50,10 +51,12 @@ export default function EnrollmentScreen() {
     setExtraFields(loadEnrollmentExtraFields());
   }, []);
 
-  const filtered = useMemo(() => records
-    .filter(r => filterLevel === 'Toutes' || r.classLevel === filterLevel)
-    .filter(r => `${r.nom} ${r.prenoms} ${r.npi}`.toLowerCase().includes(search.toLowerCase()))
-    .sort((a, b) => a.nom.localeCompare(b.nom)), [records, filterLevel, search]);
+  const filtered = useMemo(() => sortEnrollmentRecords(
+    records
+      .filter(r => filterLevel === 'Toutes' || r.classLevel === filterLevel)
+      .filter(r => `${r.nom} ${r.prenoms} ${r.npi}`.toLowerCase().includes(search.toLowerCase())),
+    filterLevel === 'Toutes' ? ENROLLMENT_LEVELS : undefined,
+  ), [records, filterLevel, search]);
 
   function persist(next: EnrollmentRecord[]) {
     setRecords(next);
@@ -67,6 +70,8 @@ export default function EnrollmentScreen() {
     }
     const record = { ...form, id: form.id || `enr-${Date.now()}`, createdAt: form.createdAt || Date.now() };
     persist(form.id ? records.map(r => r.id === form.id ? record : r) : [record, ...records]);
+    setFilterLevel(record.classLevel);
+    setSearch('');
     setForm(emptyRecord());
     setShowForm(false);
   }
